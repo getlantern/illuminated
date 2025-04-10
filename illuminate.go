@@ -86,6 +86,27 @@ func extractTemplate(n *html.Node, text map[string]string, counter *int) {
 	}
 }
 
+// parse converts markdown to HTML
+func parse(inputPath string) (*html.Node, error) {
+	f, err := os.ReadFile(path.Join(inputPath))
+	if err != nil {
+		return nil, fmt.Errorf("read file %q: %w", inputPath, err)
+	}
+	output := blackfriday.Run(f)
+
+	fmt.Println(string(output))
+
+	if len(output) == 0 {
+		return nil, fmt.Errorf("empty output from blackfriday")
+	}
+	doc, err := html.Parse(bytes.NewReader(output))
+	if err != nil {
+		return nil, fmt.Errorf("parse html: %w", err)
+	}
+	return doc, nil
+}
+
+// writeJSON writes a map[string]string to path
 func writeJSON(path string, data map[string]string) error {
 	file, err := os.Create(path)
 	if err != nil {
@@ -124,24 +145,4 @@ func writeHTML(path string, doc *html.Node) error {
 		return fmt.Errorf("render html to file: %w", err)
 	}
 	return nil
-}
-
-// parse converts markdown to HTML
-func parse(inputPath string) (*html.Node, error) {
-	f, err := os.ReadFile(path.Join(inputPath))
-	if err != nil {
-		return nil, fmt.Errorf("read file %q: %w", inputPath, err)
-	}
-	output := blackfriday.Run(f)
-
-	fmt.Println(string(output))
-
-	if len(output) == 0 {
-		return nil, fmt.Errorf("empty output from blackfriday")
-	}
-	doc, err := html.Parse(bytes.NewReader(output))
-	if err != nil {
-		return nil, fmt.Errorf("parse html: %w", err)
-	}
-	return doc, nil
 }
