@@ -1,5 +1,7 @@
 # Downloads
 
+![image](https://github.com/user-attachments/assets/7cc37517-6fc4-471b-a1b0-472d5f7c807b)
+
 ## GitHub
 https://github.com/getlantern - All download files, including backups and beta releases.
 
