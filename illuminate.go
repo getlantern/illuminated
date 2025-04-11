@@ -2,11 +2,10 @@ package illuminated
 
 import (
 	"bytes"
-	"encoding/json"
 	"fmt"
 	"html/template"
+	"log/slog"
 	"os"
-	"os/exec"
 	"path"
 	"strings"
 
@@ -14,23 +13,19 @@ import (
 	"golang.org/x/net/html"
 )
 
+var (
+	DirStaging      = "staging"
+	DirOutput       = "output"
+	DirTranslations = "translations"
+	DirTemplates    = "templates"
+)
+
 func Do() {
 	input := path.Join("sample", "downloads.md")
 	outHTML := path.Join("sample", "downloads.html.tmpl")
 	outJSON := path.Join("sample", "en.json")
 
-	var textToTranslate = make(map[string]string)
-	doc, err := parse(input)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error parsing input: %v\n", err)
-		return
-	}
-	var counter int
-	extractTemplate(doc, textToTranslate, &counter)
-	for k, v := range textToTranslate {
-		fmt.Printf("%s: %s\n", k, v)
-	}
-	fmt.Println("Extraction complete: \n", *doc)
+	doc, textToTranslate, err := Process(input)
 
 	err = html.Render(os.Stdout, doc)
 	if err != nil {
@@ -70,9 +65,26 @@ func Do() {
 
 }
 
-// extractTemplate extracts innerHTML strings into a map and
+// Process an input markdown file path into parts:
+//   - HTML document
+//   - map of translation strings
+func Process(input string) (*html.Node, map[string]string, error) {
+	var counter int
+	var translationStrings = make(map[string]string)
+	doc, err := parse(input)
+	if err != nil {
+		return nil, nil, fmt.Errorf("parse input: %v", err)
+	}
+	extract(doc, translationStrings, &counter)
+	for k, v := range translationStrings {
+		slog.Debug("extracted", "key", k, "value", v, "file", input)
+	}
+	return doc, translationStrings, nil
+}
+
+// extract extracts innerHTML strings into a map and
 // replaces innerHTML with placeholders for internationalization.
-func extractTemplate(n *html.Node, text map[string]string, counter *int) {
+func extract(n *html.Node, text map[string]string, counter *int) {
 	if n.Type == html.TextNode {
 		if len(strings.TrimSpace(n.Data)) > 0 {
 			*counter++                               // increment field number...
@@ -82,7 +94,7 @@ func extractTemplate(n *html.Node, text map[string]string, counter *int) {
 		}
 	}
 	for c := n.FirstChild; c != nil; c = c.NextSibling {
-		extractTemplate(c, text, counter)
+		extract(c, text, counter)
 	}
 }
 
@@ -94,8 +106,6 @@ func parse(inputPath string) (*html.Node, error) {
 	}
 	output := blackfriday.Run(f)
 
-	fmt.Println(string(output))
-
 	if len(output) == 0 {
 		return nil, fmt.Errorf("empty output from blackfriday")
 	}
@@ -104,45 +114,4 @@ func parse(inputPath string) (*html.Node, error) {
 		return nil, fmt.Errorf("parse html: %w", err)
 	}
 	return doc, nil
-}
-
-// writeJSON writes a map[string]string to path
-func writeJSON(path string, data map[string]string) error {
-	file, err := os.Create(path)
-	if err != nil {
-		return fmt.Errorf("create file %q: %w", path, err)
-	}
-	defer file.Close()
-
-	b, err := json.MarshalIndent(data, "", "  ")
-	if err != nil {
-		return fmt.Errorf("marshal json: %w", err)
-	}
-	_, err = file.Write(b)
-	if err != nil {
-		return fmt.Errorf("write json to file: %w", err)
-	}
-	return nil
-}
-
-func writePDF(sourcePath, outPath string) error {
-	cmd := exec.Command("pandoc", sourcePath, "-o", outPath)
-	err := cmd.Run()
-	if err != nil {
-		return fmt.Errorf("execute pandoc command: %w", err)
-	}
-	return nil
-}
-
-func writeHTML(path string, doc *html.Node) error {
-	file, err := os.Create(path)
-	if err != nil {
-		return fmt.Errorf("create file %q: %w", path, err)
-	}
-	defer file.Close()
-	err = html.Render(file, doc)
-	if err != nil {
-		return fmt.Errorf("render html to file: %w", err)
-	}
-	return nil
 }

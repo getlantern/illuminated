@@ -8,13 +8,20 @@ It should be possible for an update to an arbitrary markdown, like en/doc.md, to
 ## process
 ```mermaid
 flowchart LR
-  en/doc.md --> |parse| doc.html 
-  doc.html --> |extract| en.json
-  doc.html --> |template| doc.md.tmpl 
-  en.json --> |translate| *.json
-  doc.md.tmpl --> |render| */doc.md
-  *.json --> |render| */doc.md
-  */doc.md --> |publish| doc.pdf
+  subgraph prepare
+    en/doc.md --> |parse| doc.html 
+    doc.html --> |extract| en.json
+    doc.html --> |template| doc.md.tmpl 
+  end
+  subgraph translation
+    *.json
+  end
+  subgraph generate
+    en.json --> |translate| *.json
+    doc.md.tmpl --> |render| */doc.md
+    *.json --> |render| */doc.md
+    */doc.md --> |publish| doc.pdf
+  end
 ```
 
 ### parse
