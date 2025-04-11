@@ -18,12 +18,12 @@ var (
 // optionally deleting the files on completion if cleanup is true.
 func Stage(source string) error {
 	parsedURL, err := url.Parse(source)
-	if err == nil {
+	if err == nil && parsedURL.Scheme != "" && parsedURL.Host != "" {
 		slog.Debug("fetching remote wiki", "URL", parsedURL)
 		// TODO
 		return fmt.Errorf("remote GitHub wiki URL fetching not implemented")
 	}
-	err = os.Mkdir("staging", 0644)
+	err = os.MkdirAll("staging", 0755)
 	if err != nil {
 		return fmt.Errorf("create staging: %v", err)
 	}

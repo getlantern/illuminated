@@ -9,8 +9,8 @@ import (
 )
 
 var (
-	source  string
-	cleanup bool
+	verbose, cleanup bool
+	source           string
 )
 
 // rootCmd represents the base command when called without any subcommands
@@ -26,6 +26,9 @@ to quickly create a Cobra application.`,
 	// Uncomment the following line if your bare application
 	// has an action associated with it:
 	Run: func(cmd *cobra.Command, args []string) {
+		if verbose {
+			slog.SetLogLoggerLevel(slog.LevelDebug)
+		}
 		if cleanup {
 			defer func() {
 				err := os.RemoveAll(illuminated.StagingDir)
@@ -36,10 +39,14 @@ to quickly create a Cobra application.`,
 				}
 			}()
 		}
+		slog.Debug("staging...")
 		err := illuminated.Stage(source)
 		if err != nil {
 			slog.Error("unable to stage selected source", "error", err)
+			os.Exit(1)
 		}
+
+		slog.Debug("processing...")
 
 		illuminated.Do()
 	},
@@ -53,6 +60,8 @@ func Execute() {
 }
 
 func init() {
+	rootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "verbose logging (DEBUG)")
+
 	rootCmd.PersistentFlags().StringVarP(&source, "source", "s", "", "source document(s) location, can be: file, directory, or GitHub wiki URL")
 	rootCmd.MarkPersistentFlagRequired("source")
 
