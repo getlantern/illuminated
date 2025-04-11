@@ -14,10 +14,11 @@ import (
 )
 
 var (
-	DirStaging      = "staging"
-	DirOutput       = "output"
-	DirTranslations = "translations"
-	DirTemplates    = "templates"
+	BaseLang        = "en"           // ISO 639-1 language code
+	DirStaging      = "staging"      // copies of source and intermediate files
+	DirOutput       = "output"       // final output (typically PDF)
+	DirTranslations = "translations" // translation files for internationalization
+	DirTemplates    = "templates"    // template to recreate localized copies
 )
 
 func Do() {
@@ -27,10 +28,10 @@ func Do() {
 
 	doc, textToTranslate, err := Process(input)
 
-	err = html.Render(os.Stdout, doc)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error rendering HTML: %v\n", err)
-	}
+	// err = html.Render(os.Stdout, doc)
+	// if err != nil {
+	// 	fmt.Fprintf(os.Stderr, "Error rendering HTML: %v\n", err)
+	// }
 
 	if err := writeJSON(outJSON, textToTranslate); err != nil {
 		fmt.Fprintf(os.Stderr, "Error writing JSON: %v\n", err)
@@ -79,6 +80,31 @@ func Process(input string) (*html.Node, map[string]string, error) {
 	for k, v := range translationStrings {
 		slog.Debug("extracted", "key", k, "value", v, "file", input)
 	}
+	baseName := strings.TrimSuffix(path.Base(input), path.Ext(input))
+
+	jsonOut := path.Join(DirTranslations, fmt.Sprintf("%s.json", baseName))
+	err = writeJSON(jsonOut, translationStrings)
+	if err != nil {
+		return nil, nil, fmt.Errorf("write %q: %v", jsonOut, err)
+	}
+	slog.Debug("translation strings written", "file", jsonOut)
+
+	htmlOut := path.Join(DirStaging, fmt.Sprintf("%s.html", baseName))
+	err = writeHTML(htmlOut, doc)
+	if err != nil {
+		return nil, nil, fmt.Errorf("write HTML template: %v", err)
+	}
+	slog.Debug("HTML template written", "file", htmlOut)
+
+	tmplOut := fmt.Sprintf("%s.html.tmpl", baseName)
+	tmpl, err = template.ParseFiles(htmlOut)
+	if err != nil {
+		return nil, nil, fmt.Errorf("parse template: %v", err)
+	}
+	outFile, err = os.Create(path.Join(DirTemplates, tmplOut))
+	if err != nil {
+		return nil, nil, fmt.Errorf("create template %q: %v", tmplOut, err)
+
 	return doc, translationStrings, nil
 }
 
