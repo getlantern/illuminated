@@ -40,3 +40,5 @@ Translated files are combined into single PDF per language.
 - [ ] append multiple docs
 - [ ] generate TOC
 - [ ] setup CI with pandoc & testing
+- [ ] implement fallback to base language 
+- [ ] create mechanism for warning on uncurrent translations
