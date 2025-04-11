@@ -1,16 +1,22 @@
 package cmd
 
 import (
+	"log/slog"
 	"os"
 
 	"github.com/getlantern/illuminated"
 	"github.com/spf13/cobra"
 )
 
+var (
+	source  string
+	cleanup bool
+)
+
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
 	Use:   "cmd",
-	Short: "A brief description of your application",
+	Short: "Create multiple",
 	Long: `A longer description that spans multiple lines and likely contains
 examples and usage of using your application. For example:
 
@@ -20,12 +26,25 @@ to quickly create a Cobra application.`,
 	// Uncomment the following line if your bare application
 	// has an action associated with it:
 	Run: func(cmd *cobra.Command, args []string) {
+		if cleanup {
+			defer func() {
+				err := os.RemoveAll(illuminated.StagingDir)
+				if err != nil {
+					slog.Error("unable to cleanup staging dir")
+				} else {
+					slog.Debug("staging dir cleaned up")
+				}
+			}()
+		}
+		err := illuminated.Stage(source)
+		if err != nil {
+			slog.Error("unable to stage selected source", "error", err)
+		}
+
 		illuminated.Do()
 	},
 }
 
-// Execute adds all child commands to the root command and sets flags appropriately.
-// This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() {
 	err := rootCmd.Execute()
 	if err != nil {
@@ -34,13 +53,8 @@ func Execute() {
 }
 
 func init() {
-	// Here you will define your flags and configuration settings.
-	// Cobra supports persistent flags, which, if defined here,
-	// will be global for your application.
+	rootCmd.PersistentFlags().StringVarP(&source, "source", "s", "", "source document(s) location, can be: file, directory, or GitHub wiki URL")
+	rootCmd.MarkPersistentFlagRequired("source")
 
-	// rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.cmd.yaml)")
-
-	// Cobra also supports local flags, which will only run
-	// when this action is called directly.
-	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	rootCmd.PersistentFlags().BoolVarP(&cleanup, "cleanup", "c", false, "cleanup staging directory after completion")
 }
