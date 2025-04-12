@@ -1,0 +1,37 @@
+name: Go - Test & Build
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  test-build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Setup
+        uses: actions/setup-go@v3
+        with:
+          go-version: stable
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Test
+        run: go test ./...
+
+      - name: Build
+        run: go build -o illuminate cli/main.go
+  
+      - name: Commit
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "build CLI binary"
+          branch: main
+          file_pattern: "illuminate"
+          commit_user_name: "github-actions[bot]"
+          commit_user_email: "github-actions[bot]@users.noreply.github.com"

@@ -26,6 +26,7 @@ func Execute() {
 
 func init() {
 	rootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "verbose logging (DEBUG)")
+	rootCmd.CompletionOptions.DisableDefaultCmd = true
 }
 
 func Init() {

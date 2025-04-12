@@ -15,7 +15,7 @@ import (
 // prepareCmd represents the prepare command
 var prepareCmd = &cobra.Command{
 	Use:    "prepare",
-	Short:  "stage source files, generate templates and translation files",
+	Short:  "stage source files, parse them, and create templates and translation files",
 	PreRun: func(cmd *cobra.Command, args []string) { Init() },
 	Run: func(cmd *cobra.Command, args []string) {
 		// stage
