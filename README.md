@@ -46,6 +46,7 @@ flowchart LR
 - [ ] read from ~dir~ or wiki source
 - [ ] append multiple docs
 - [ ] generate TOC
-- [ ] setup CI with pandoc & testing
+- [ ] write unit tests
+- [ ] test E2E (including Pandoc calls) in CI
 - [ ] implement fallback to base language 
 - [ ] create mechanism for warning on uncurrent translations
