@@ -24,8 +24,8 @@ flowchart LR
   end
   subgraph generate
     en.json --> |translate| *.json
-    doc.md.tmpl --> |render| */doc.md
-    *.json --> |render| */doc.md
+    doc.md.tmpl --> |generate| */doc.md
+    *.json --> |generate| */doc.md
     */doc.md --> |publish| doc.pdf
   end
 ```
@@ -36,7 +36,7 @@ flowchart LR
 | extract | Inner HTML strings are extracted to `en.json`. |
 | template | Go template is generated from English markdown, corresponding to `en.json`. |
 | translate | Translation files are generated. |
-| render | Templates and translation files are combined to render translated markdown copies. |
+| generate | Templates and translation files are combined to generate translated markdown copies. |
 | publish | Translated files are combined into single PDF per language. |
 
 ## MVP TODO
