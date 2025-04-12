@@ -1,4 +1,7 @@
 # illuminated
+
+[![Go - Test & Build](https://github.com/getlantern/illuminated/actions/workflows/go.yml/badge.svg)](https://github.com/getlantern/illuminated/actions/workflows/go.yml)
+
 internationalization tool for GitHub wikis
 
 ## purpose
