@@ -17,6 +17,7 @@ var generateCmd = &cobra.Command{
 	Short:  "generate published files from prepared templates and translations",
 	PreRun: func(cmd *cobra.Command, args []string) { Init() },
 	Run: func(cmd *cobra.Command, args []string) {
+		// TODO don't hardcode this
 		err := illuminated.Generate("downloads", "en")
 		if err != nil {
 			slog.Error("generate", "error", err)
@@ -28,14 +29,7 @@ var generateCmd = &cobra.Command{
 
 func init() {
 	rootCmd.AddCommand(generateCmd)
-
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// generateCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// generateCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	// generateCmd.MarkFlagsOneRequired("html", "pdf")
+	// generateCmd.PersistentFlags().BoolVarP(&html, "html", "h", false, "generate HTML output")
+	// generateCmd.PersistentFlags().BoolVarP(&pdf, "pdf", "p", false, "generate PDF output")
 }

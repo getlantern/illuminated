@@ -22,60 +22,15 @@ var (
 	DirTemplates    = "templates"    // template to recreate localized copies
 )
 
-func Do() {
-	input := path.Join("sample", "downloads.md")
-	outHTML := path.Join("sample", "downloads.html.tmpl")
-	outJSON := path.Join("sample", "en.json")
-
-	doc, textToTranslate, err := Process(input)
-
-	// err = html.Render(os.Stdout, doc)
-	// if err != nil {
-	// 	fmt.Fprintf(os.Stderr, "Error rendering HTML: %v\n", err)
-	// }
-
-	if err := writeJSON(outJSON, textToTranslate); err != nil {
-		fmt.Fprintf(os.Stderr, "Error writing JSON: %v\n", err)
-	}
-	if err := writeHTML(outHTML, doc); err != nil {
-		fmt.Fprintf(os.Stderr, "Error writing HTML: %v\n", err)
-	}
-
-	tmpl, err := template.ParseFiles(outHTML)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error parsing template: %v\n", err)
-		return
-	}
-
-	outFile, err := os.Create("sample/downloads.html")
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error creating output file: %v\n", err)
-		return
-	}
-	defer outFile.Close()
-
-	err = tmpl.Execute(outFile, textToTranslate)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error writing template to file: %v\n", err)
-	}
-
-	err = writePDF("sample/downloads.html", "sample/downloads.pdf")
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error writing PDF: %v\n", err)
-	}
-	fmt.Println("Success!")
-
-}
-
-// Process an input markdown file path into parts:
-//   - HTML document
-//   - map of translation strings
-func Process(input string) (*html.Node, map[string]string, error) {
+// Process an input markdown file into parts:
+//   - <DirTranslations>/<lang>.json       (translation strings)
+//   - <DirTranslations>/<file>.html.tmpl  (go template)
+func Process(input string) error {
 	var counter int
 	var translationStrings = make(map[string]string)
 	doc, err := parse(input)
 	if err != nil {
-		return nil, nil, fmt.Errorf("parse input: %v", err)
+		return fmt.Errorf("parse input: %v", err)
 	}
 	extract(doc, translationStrings, &counter)
 	for k, v := range translationStrings {
@@ -86,31 +41,32 @@ func Process(input string) (*html.Node, map[string]string, error) {
 	// json
 	err = os.MkdirAll(DirTranslations, os.ModePerm)
 	if err != nil {
-		return nil, nil, fmt.Errorf("create directory %q: %v", DirTranslations, err)
+		return fmt.Errorf("create directory %q: %v", DirTranslations, err)
 	}
 	jsonOut := path.Join(DirTranslations, fmt.Sprintf("%s.%s.json", BaseLang, baseName))
 	err = writeJSON(jsonOut, translationStrings)
 	if err != nil {
-		return nil, nil, fmt.Errorf("write %v: %v", jsonOut, err)
+		return fmt.Errorf("write %v: %v", jsonOut, err)
 	}
-	slog.Debug("translation strings written", "file", jsonOut)
+	slog.Info("translation strings written", "file", jsonOut)
 
 	// template
 	err = os.MkdirAll(DirTemplates, os.ModePerm)
 	if err != nil {
-		return nil, nil, fmt.Errorf("create directory %v: %v", DirTemplates, err)
+		return fmt.Errorf("create directory %v: %v", DirTemplates, err)
 	}
 	tmplOut := path.Join(DirTemplates, fmt.Sprintf("%s.html.tmpl", baseName))
 	err = writeHTML(tmplOut, doc)
 	if err != nil {
-		return nil, nil, fmt.Errorf("write HTML template: %v", err)
+		return fmt.Errorf("write HTML template: %v", err)
 	}
-	slog.Debug("HTML template written", "file", tmplOut)
-
-	// TODO return just error?
-	return doc, translationStrings, nil
+	slog.Info("HTML template written", "file", tmplOut)
+	return nil
 }
 
+// Generate combines <DirTranslation>/<lang>.json and <DirTemplates>/html.tmpl to make:
+//   - <DirOutput>/<lang>.<name>.html
+//   - <DirOutput>/<lang>.<name>.pdf
 func Generate(name string, langCode string) error {
 	htmlOut := fmt.Sprintf("%s.%s.html", langCode, name)
 	targetTemplate := path.Join(DirTemplates, fmt.Sprintf("%s.html.tmpl", name))
@@ -157,10 +113,13 @@ func Generate(name string, langCode string) error {
 	}
 
 	// generate pdf
-	err = writePDF(
-		path.Join(DirOutput, htmlOut),
-		path.Join(DirOutput, fmt.Sprintf("%s.%s.pdf", langCode, name)),
-	)
+	pdfOut := fmt.Sprintf("%s.%s.pdf", langCode, name)
+	err = writePDF(path.Join(DirOutput, htmlOut), pdfOut)
+	if err != nil {
+		return fmt.Errorf("generate PDF: %v", err)
+	}
+	slog.Info("generated", "pdf", pdfOut, "html", htmlOut)
+
 	return nil
 }
 

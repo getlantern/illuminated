@@ -19,7 +19,7 @@ func Stage(source string) error {
 	parsedURL, err := url.Parse(source)
 	if err == nil && parsedURL.Scheme != "" && parsedURL.Host != "" {
 		slog.Debug("fetching remote wiki", "URL", parsedURL)
-		// TODO
+		// TODO fetch remote wiki
 		return fmt.Errorf("remote GitHub wiki URL fetching not implemented")
 	}
 	err = os.MkdirAll("staging", 0755)

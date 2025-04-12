@@ -24,7 +24,7 @@ var prepareCmd = &cobra.Command{
 			slog.Error("unable to stage selected source", "error", err)
 			os.Exit(1)
 		}
-		slog.Info("source files staged")
+		slog.Debug("source files staged")
 
 		// process
 		files, err := os.ReadDir(illuminated.DirStaging)
@@ -39,23 +39,13 @@ var prepareCmd = &cobra.Command{
 			}
 			filePath := filepath.Join(illuminated.DirStaging, file.Name())
 			slog.Debug("processing file", "file", filePath)
-			doc, strs, err := illuminated.Process(filePath)
+			err := illuminated.Process(filePath)
 			if err != nil {
 				slog.Error("process file", "file", filePath, "error", err)
 				os.Exit(1)
 			}
-			slog.Info("processed", "doc", filePath, "strings", len(strs), "docaddr", doc)
-			// fmt.Println(doc)
-			// fmt.Println(strs)
-
-			// TODO
-
+			slog.Info("processed", "doc", filePath)
 		}
-		// - html.tmpl
-		// - .json translation file
-
-		// illuminated.Do()
-
 	},
 }
 
