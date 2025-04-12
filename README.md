@@ -30,23 +30,14 @@ flowchart LR
   end
 ```
 
-### parse
-English markdown is converted to HTML.
-
-### extract
-Inner HTML strings are extracted to `en.json`.
-
-### template
-Go template is generated from English markdown, corresponding to `en.json`.
-
-### translate
-Translation files are generated.
-
-### render
-Templates and translation files are combined to render translated markdown copies.
-
-### publish
-Translated files are combined into single PDF per language.
+| step | purpose
+| --- | --- |
+| parse | English markdown is converted to HTML. |
+| extract | Inner HTML strings are extracted to `en.json`. |
+| template | Go template is generated from English markdown, corresponding to `en.json`. |
+| translate | Translation files are generated. |
+| render | Templates and translation files are combined to render translated markdown copies. |
+| publish | Translated files are combined into single PDF per language. |
 
 ## MVP TODO
 - [ ] read from ~dir~ or wiki source
