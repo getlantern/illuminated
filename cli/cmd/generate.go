@@ -4,8 +4,10 @@ Copyright © 2025 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
-	"fmt"
+	"log/slog"
+	"os"
 
+	"github.com/getlantern/illuminated"
 	"github.com/spf13/cobra"
 )
 
@@ -15,7 +17,12 @@ var generateCmd = &cobra.Command{
 	Short:  "generate published files from prepared templates and translations",
 	PreRun: func(cmd *cobra.Command, args []string) { Init() },
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("generate called")
+		err := illuminated.Generate("downloads", "en")
+		if err != nil {
+			slog.Error("generate", "error", err)
+			os.Exit(1)
+		}
+		slog.Info("generated", "file", "downloads.html")
 	},
 }
 

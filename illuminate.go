@@ -2,6 +2,7 @@ package illuminated
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"html/template"
 	"log/slog"
@@ -82,30 +83,85 @@ func Process(input string) (*html.Node, map[string]string, error) {
 	}
 	baseName := strings.TrimSuffix(path.Base(input), path.Ext(input))
 
-	jsonOut := path.Join(DirTranslations, fmt.Sprintf("%s.json", baseName))
+	// json
+	err = os.MkdirAll(DirTranslations, os.ModePerm)
+	if err != nil {
+		return nil, nil, fmt.Errorf("create directory %q: %v", DirTranslations, err)
+	}
+	jsonOut := path.Join(DirTranslations, fmt.Sprintf("%s.%s.json", BaseLang, baseName))
 	err = writeJSON(jsonOut, translationStrings)
 	if err != nil {
-		return nil, nil, fmt.Errorf("write %q: %v", jsonOut, err)
+		return nil, nil, fmt.Errorf("write %v: %v", jsonOut, err)
 	}
 	slog.Debug("translation strings written", "file", jsonOut)
 
-	htmlOut := path.Join(DirStaging, fmt.Sprintf("%s.html", baseName))
-	err = writeHTML(htmlOut, doc)
+	// template
+	err = os.MkdirAll(DirTemplates, os.ModePerm)
+	if err != nil {
+		return nil, nil, fmt.Errorf("create directory %v: %v", DirTemplates, err)
+	}
+	tmplOut := path.Join(DirTemplates, fmt.Sprintf("%s.html.tmpl", baseName))
+	err = writeHTML(tmplOut, doc)
 	if err != nil {
 		return nil, nil, fmt.Errorf("write HTML template: %v", err)
 	}
-	slog.Debug("HTML template written", "file", htmlOut)
+	slog.Debug("HTML template written", "file", tmplOut)
 
-	tmplOut := fmt.Sprintf("%s.html.tmpl", baseName)
-	tmpl, err = template.ParseFiles(htmlOut)
-	if err != nil {
-		return nil, nil, fmt.Errorf("parse template: %v", err)
-	}
-	outFile, err = os.Create(path.Join(DirTemplates, tmplOut))
-	if err != nil {
-		return nil, nil, fmt.Errorf("create template %q: %v", tmplOut, err)
-
+	// TODO return just error?
 	return doc, translationStrings, nil
+}
+
+func Generate(name string, langCode string) error {
+	htmlOut := fmt.Sprintf("%s.%s.html", langCode, name)
+	targetTemplate := path.Join(DirTemplates, fmt.Sprintf("%s.html.tmpl", name))
+	targetTranslations := path.Join(DirTranslations, fmt.Sprintf("%s.%s.json", langCode, name))
+	f, err := os.ReadFile(targetTranslations)
+	if err != nil {
+		return fmt.Errorf("read translation file %v: %v", targetTranslations, err)
+	}
+	var translations map[string]string
+	err = json.Unmarshal(f, &translations)
+	if err != nil {
+		return fmt.Errorf("unmarshal translation file %v: %v", targetTranslations, err)
+	}
+
+	// TODO check for missing translations
+	fallbackNecessary := false
+	for _, v := range translations {
+		if v == "" {
+			fallbackNecessary = true
+		}
+	}
+	if fallbackNecessary {
+		slog.Warn("translation missing", "file", targetTranslations)
+		// TODO fallback to base lang selectively
+	}
+
+	// generate html
+	tmpl, err := template.ParseFiles(targetTemplate)
+	if err != nil {
+		return fmt.Errorf("parse template %v: %v", targetTemplate, err)
+	}
+	err = os.MkdirAll(DirOutput, os.ModePerm)
+	if err != nil {
+		return fmt.Errorf("create directory %v: %v", DirOutput, err)
+	}
+	outFile, err := os.Create(path.Join(DirOutput, htmlOut))
+	if err != nil {
+		return fmt.Errorf("create template %v: %v", htmlOut, err)
+	}
+	defer outFile.Close()
+	err = tmpl.Execute(outFile, translations)
+	if err != nil {
+		return fmt.Errorf("execute template: %v", err)
+	}
+
+	// generate pdf
+	err = writePDF(
+		path.Join(DirOutput, htmlOut),
+		path.Join(DirOutput, fmt.Sprintf("%s.%s.pdf", langCode, name)),
+	)
+	return nil
 }
 
 // extract extracts innerHTML strings into a map and
@@ -124,7 +180,7 @@ func extract(n *html.Node, text map[string]string, counter *int) {
 	}
 }
 
-// parse converts markdown to HTML
+// parse converts markdown file to HTML object
 func parse(inputPath string) (*html.Node, error) {
 	f, err := os.ReadFile(path.Join(inputPath))
 	if err != nil {
