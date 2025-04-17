@@ -1,4 +1,4 @@
-name: Go - Test & Build
+name: Test Go
 
 on:
   push:
@@ -23,15 +23,3 @@ jobs:
 
       - name: Test
         run: go test ./...
-
-      - name: Build
-        run: go build -o illuminate cli/main.go
-  
-      - name: Commit
-        uses: stefanzweifel/git-auto-commit-action@v5
-        with:
-          commit_message: "build CLI binary"
-          branch: main
-          file_pattern: "illuminate"
-          commit_user_name: "github-actions[bot]"
-          commit_user_email: "github-actions[bot]@users.noreply.github.com"

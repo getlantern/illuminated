@@ -1,3 +1,7 @@
+// package illuminated converts markdown into corresponding templates and translations,
+// optionally also generating rendered, translated final outputs from completed translations.
+//
+// Translation is outside the scope of this package.
 package illuminated
 
 import (
@@ -15,7 +19,8 @@ import (
 )
 
 var (
-	BaseLang        = "en"           // ISO 639-1 language code
+	BaseLang = "en" // ISO 639-1 language code
+	// consider using an optional config file .illuminatedrc (maybe an init commmand with prompt)
 	DirStaging      = "staging"      // copies of source and intermediate files
 	DirOutput       = "output"       // final output (typically PDF)
 	DirTranslations = "translations" // translation files for internationalization
