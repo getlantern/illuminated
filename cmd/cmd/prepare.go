@@ -24,7 +24,7 @@ var prepareCmd = &cobra.Command{
 		slog.Debug("source files staged")
 
 		// process
-		files, err := os.ReadDir(illuminated.DirStaging)
+		files, err := os.ReadDir(illuminated.DefaultDirNameStaging)
 		if err != nil {
 			slog.Error("read staging directory", "error", err)
 			os.Exit(1)
@@ -34,7 +34,7 @@ var prepareCmd = &cobra.Command{
 				slog.Warn("skipping dir (expects only files)", "name", file.Name())
 				continue
 			}
-			filePath := filepath.Join(illuminated.DirStaging, file.Name())
+			filePath := filepath.Join(illuminated.DefaultDirNameStaging, file.Name())
 			slog.Debug("processing file", "file", filePath)
 			err := illuminated.Process(filePath)
 			if err != nil {

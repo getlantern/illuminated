@@ -1,6 +1,7 @@
 package illuminated
 
 import (
+	"os"
 	"path"
 	"reflect"
 	"testing"
@@ -10,24 +11,29 @@ import (
 
 var (
 	testProjectDir   = "testProject"
-	nonDefaultConfig = config{
-		Source:  "en",
+	nonDefaultConfig = Config{
+		Base:    "en",
 		Targets: []string{"fa", "ru"},
 	}
 )
 
 func TestConfigWrite(t *testing.T) {
-	err := nonDefaultConfig.write(testProjectDir)
+	err := nonDefaultConfig.Write(testProjectDir)
+	require.NoError(t, err)
+	err = os.RemoveAll(testProjectDir)
 	require.NoError(t, err)
 }
 
 func TestConfigRead(t *testing.T) {
-	err := nonDefaultConfig.write(testProjectDir)
+	err := nonDefaultConfig.Write(testProjectDir)
 	require.NoError(t, err)
 
-	var c config
-	err = c.read(path.Join(testProjectDir, DefaultConfigFilename))
+	var c Config
+	err = c.Read(path.Join(testProjectDir, DefaultConfigFilename))
 	require.NoError(t, err)
 	require.Equal(t, true, reflect.DeepEqual(c, nonDefaultConfig))
 	t.Logf("config read as written: \n%v", c)
+
+	err = os.RemoveAll(testProjectDir)
+	require.NoError(t, err)
 }

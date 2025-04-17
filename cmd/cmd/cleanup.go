@@ -18,30 +18,30 @@ var cleanupCmd = &cobra.Command{
 	PreRun: func(cmd *cobra.Command, args []string) { Init() },
 	Run: func(cmd *cobra.Command, args []string) {
 		if staging {
-			err := os.RemoveAll(illuminated.DirStaging)
+			err := os.RemoveAll(illuminated.DefaultDirNameStaging)
 			if err != nil {
-				slog.Error("unable to cleanup", "dir", illuminated.DirStaging, "error", err)
+				slog.Error("unable to cleanup", "dir", illuminated.DefaultDirNameStaging, "error", err)
 				os.Exit(1)
 			}
 		}
 		if output {
-			err := os.RemoveAll(illuminated.DirOutput)
+			err := os.RemoveAll(illuminated.DefaultDirNameOutput)
 			if err != nil {
-				slog.Error("unable to cleanup", "dir", illuminated.DirOutput, "error", err)
+				slog.Error("unable to cleanup", "dir", illuminated.DefaultDirNameOutput, "error", err)
 				os.Exit(1)
 			}
 		}
 		if templates {
-			err := os.RemoveAll(illuminated.DirTemplates)
+			err := os.RemoveAll(illuminated.DefaultDirNameTemplates)
 			if err != nil {
-				slog.Error("unable to cleanup", "dir", illuminated.DirTemplates, "error", err)
+				slog.Error("unable to cleanup", "dir", illuminated.DefaultDirNameTemplates, "error", err)
 				os.Exit(1)
 			}
 		}
 		if translations {
-			err := os.RemoveAll(illuminated.DirTranslations)
+			err := os.RemoveAll(illuminated.DefaultDirNameTranslations)
 			if err != nil {
-				slog.Error("unable to cleanup", "dir", illuminated.DirTranslations, "error", err)
+				slog.Error("unable to cleanup", "dir", illuminated.DefaultDirNameTranslations, "error", err)
 				os.Exit(1)
 			}
 		}

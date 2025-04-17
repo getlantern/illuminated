@@ -1,3 +1,4 @@
 base: en
 targets:
     - en
+    - zh

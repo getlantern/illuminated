@@ -11,21 +11,29 @@ import (
 
 var (
 	DefaultConfigFilename = ".illuminatedrc"
-	DefaultConfig         = config{
-		Source:  "en",
+	DefaultConfig         = Config{
+		Base:    "en",
 		Targets: []string{"en", "zh"},
 	}
+	// BaseLang                   = "en"           // ISO 639-1 language code
+	DefaultDirNameStaging      = "staging"      // copies of source and intermediate files
+	DefaultDirNameOutput       = "output"       // final output (typically PDF)
+	DefaultDirNameTranslations = "translations" // translation files for internationalization
+	DefaultDirNameTemplates    = "templates"    // template to recreate localized copies
 )
 
-type config struct {
-	Source  string   `json:"source"`
+// Config defines the base language and all languages
+// for which translations will be provided.
+type Config struct {
+	Base    string   `json:"base"`
 	Targets []string `json:"target"`
 }
 
-func (c *config) write(dir string) error {
-	// check for existing config file
-	if _, err := os.Stat(path.Join(dir, DefaultConfigFilename)); err == nil {
-		slog.Warn("existing config exists and will be overwritten", "file", DefaultConfigFilename)
+// Write creates a config file in the specified directory.
+func (c *Config) Write(dir string) error {
+	filepath := path.Join(dir, DefaultConfigFilename)
+	if _, err := os.Stat(filepath); err == nil {
+		slog.Warn("existing config exists and will be overwritten", "filepath", filepath)
 	} else if !os.IsNotExist(err) {
 		return fmt.Errorf("check config file %v: %v", DefaultConfigFilename, err)
 	}
@@ -55,7 +63,8 @@ func (c *config) write(dir string) error {
 	return nil
 }
 
-func (c *config) read(filepath string) error {
+// Read reads a config file from the specified path.
+func (c *Config) Read(filepath string) error {
 	f, err := os.ReadFile(filepath)
 	if err != nil {
 		return fmt.Errorf("read config file %v: %v", filepath, err)
@@ -66,9 +75,9 @@ func (c *config) read(filepath string) error {
 		return fmt.Errorf("unmarshal config file %v: %v", filepath, err)
 	}
 
-	if c.Source == "" {
-		slog.Warn("source language not set, using default", "lang", DefaultConfig.Source)
-		c.Source = DefaultConfig.Source
+	if c.Base == "" {
+		slog.Warn("source language not set, using default", "lang", DefaultConfig.Base)
+		c.Base = DefaultConfig.Base
 	}
 	if len(c.Targets) == 0 {
 		slog.Warn("target languages not set, using default", "langs", DefaultConfig.Targets)

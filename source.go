@@ -42,13 +42,13 @@ func Stage(source string) error {
 				slog.Debug("ignoring directory", "name", entry.Name())
 				continue
 			}
-			err = copy(filepath.Join(source, entry.Name()), filepath.Join(DirStaging, entry.Name()))
+			err = copy(filepath.Join(source, entry.Name()), filepath.Join(DefaultDirNameStaging, entry.Name()))
 			if err != nil {
 				return fmt.Errorf("stage file %q from dir: %v", entry.Name(), err)
 			}
 		}
 	} else {
-		err = copy(source, filepath.Join(DirStaging, filepath.Base(source)))
+		err = copy(source, filepath.Join(DefaultDirNameStaging, filepath.Base(source)))
 		if err != nil {
 			return fmt.Errorf("stage single file: %v", err)
 		}
