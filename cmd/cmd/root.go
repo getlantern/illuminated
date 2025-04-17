@@ -8,8 +8,8 @@ import (
 )
 
 var (
-	verbose bool
-	source  string
+	verbose, quiet bool
+	source         string
 )
 
 // rootCmd represents the base command when called without any subcommands
@@ -25,11 +25,16 @@ func Execute() {
 }
 
 func init() {
-	rootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "verbose logging (DEBUG)")
 	rootCmd.CompletionOptions.DisableDefaultCmd = true
+	rootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "verbose logging (DEBUG)")
+	rootCmd.PersistentFlags().BoolVarP(&quiet, "quiet", "q", false, "quiet logging (ERROR)")
+	rootCmd.MarkFlagsMutuallyExclusive("verbose", "quiet")
 }
 
 func Init() {
+	if quiet {
+		slog.SetLogLoggerLevel(slog.LevelError)
+	}
 	if verbose {
 		slog.SetLogLoggerLevel(slog.LevelDebug)
 		slog.Debug("verbose logging enabled")
