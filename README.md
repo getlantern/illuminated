@@ -11,7 +11,6 @@ It should be possible for an update to an arbitrary markdown, like en/doc.md, to
 ## usage
 To delete all example files and start over, run:
 ```sh
-go run ./cli cleanup -gtlo && go run ./cli prepare -s example && go run ./cli generate
 ```
 
 ## process
@@ -48,5 +47,5 @@ flowchart LR
 - [ ] generate TOC
 - [ ] write unit tests
 - [ ] test E2E (including Pandoc calls) in CI
-- [ ] implement fallback to base language 
+- [x] implement fallback to base language 
 - [ ] create mechanism for warning on uncurrent translations

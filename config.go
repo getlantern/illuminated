@@ -22,8 +22,8 @@ var (
 	DefaultDirNameTemplates    = "templates"    // template to recreate localized copies
 )
 
-// Config defines the base language and all languages
-// for which translations will be provided.
+// Config defines the base language from which all translations will be derived,
+// and all languages that will be translated (assumes ISO 639-1 codes).
 type Config struct {
 	Base    string   `json:"base"`
 	Targets []string `json:"target"`
@@ -43,7 +43,6 @@ func (c *Config) Write(dir string) error {
 		return fmt.Errorf("create directory %v: %v", dir, err)
 	}
 	configPath := path.Join(dir, DefaultConfigFilename)
-	slog.Debug("creating config file", "file", DefaultConfigFilename)
 	f, err := os.Create(configPath)
 	if err != nil {
 		return fmt.Errorf("create config file %v: %v", DefaultConfigFilename, err)
@@ -59,7 +58,7 @@ func (c *Config) Write(dir string) error {
 	if err != nil {
 		return fmt.Errorf("write config file %v: %v", DefaultConfigFilename, err)
 	}
-
+	slog.Info("project directory created with config", "dir", dir, "config", configPath)
 	return nil
 }
 

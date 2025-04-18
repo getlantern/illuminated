@@ -3,47 +3,31 @@ package cmd
 import (
 	"log/slog"
 	"os"
+	"path"
 
 	"github.com/getlantern/illuminated"
 	"github.com/spf13/cobra"
 )
 
-var (
-	staging, output, templates, translations bool
-)
+var ()
 
 var cleanupCmd = &cobra.Command{
 	Use:    "cleanup",
 	Short:  "deletes selected directory and all files",
 	PreRun: func(cmd *cobra.Command, args []string) { Init() },
 	Run: func(cmd *cobra.Command, args []string) {
-		if staging {
-			err := os.RemoveAll(illuminated.DefaultDirNameStaging)
-			if err != nil {
-				slog.Error("unable to cleanup", "dir", illuminated.DefaultDirNameStaging, "error", err)
-				os.Exit(1)
+		slog.Debug("cleaning up project directory", "dir", projectDir)
+		_, err := os.Stat(path.Join(projectDir, illuminated.DefaultConfigFilename))
+		if err != nil {
+			if os.IsNotExist(err) {
+				slog.Info("no config found, nothing to clean up")
+				os.Exit(0)
 			}
 		}
-		if output {
-			err := os.RemoveAll(illuminated.DefaultDirNameOutput)
-			if err != nil {
-				slog.Error("unable to cleanup", "dir", illuminated.DefaultDirNameOutput, "error", err)
-				os.Exit(1)
-			}
-		}
-		if templates {
-			err := os.RemoveAll(illuminated.DefaultDirNameTemplates)
-			if err != nil {
-				slog.Error("unable to cleanup", "dir", illuminated.DefaultDirNameTemplates, "error", err)
-				os.Exit(1)
-			}
-		}
-		if translations {
-			err := os.RemoveAll(illuminated.DefaultDirNameTranslations)
-			if err != nil {
-				slog.Error("unable to cleanup", "dir", illuminated.DefaultDirNameTranslations, "error", err)
-				os.Exit(1)
-			}
+		err = os.RemoveAll(projectDir)
+		if err != nil {
+			slog.Error("error removing project directory", "dir", projectDir, "error", err)
+			os.Exit(1)
 		}
 		slog.Debug("cleanup complete!")
 	},
@@ -51,8 +35,4 @@ var cleanupCmd = &cobra.Command{
 
 func init() {
 	rootCmd.AddCommand(cleanupCmd)
-	cleanupCmd.PersistentFlags().BoolVarP(&staging, "staging", "g", true, "delete staging directory")
-	cleanupCmd.PersistentFlags().BoolVarP(&templates, "templates", "t", false, "delete templates directory")
-	cleanupCmd.PersistentFlags().BoolVarP(&translations, "translations", "l", false, "delete translations directory")
-	cleanupCmd.PersistentFlags().BoolVarP(&output, "output", "o", false, "delete output directory")
 }

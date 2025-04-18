@@ -9,6 +9,7 @@ import (
 
 var (
 	verbose, quiet bool
+	projectDir     string
 	source         string
 )
 
@@ -26,6 +27,7 @@ func Execute() {
 
 func init() {
 	rootCmd.CompletionOptions.DisableDefaultCmd = true
+	rootCmd.PersistentFlags().StringVarP(&projectDir, "directory", "d", "illuminated-project", "project directory for intermediate files")
 	rootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "verbose logging (DEBUG)")
 	rootCmd.PersistentFlags().BoolVarP(&quiet, "quiet", "q", false, "quiet logging (ERROR)")
 	rootCmd.MarkFlagsMutuallyExclusive("verbose", "quiet")

@@ -6,8 +6,7 @@ import (
 )
 
 var (
-	config     illuminated.Config
-	projectDir string
+	config illuminated.Config
 )
 
 // initCmd represents the init command
@@ -25,7 +24,6 @@ var initCmd = &cobra.Command{
 
 func init() {
 	rootCmd.AddCommand(initCmd)
-	rootCmd.PersistentFlags().StringVarP(&projectDir, "directory", "d", "illuminated-project", "project directory for intermediate files")
-	rootCmd.PersistentFlags().StringVarP(&config.Base, "base", "b", illuminated.DefaultConfig.Base, "base language for source material (ISO 639-1 codes)")
-	rootCmd.PersistentFlags().StringSliceVarP(&config.Targets, "target", "t", illuminated.DefaultConfig.Targets, "target languages (ISO 639-1 codes)")
+	initCmd.PersistentFlags().StringVarP(&config.Base, "base", "b", illuminated.DefaultConfig.Base, "base language for source material (ISO 639-1 codes)")
+	initCmd.PersistentFlags().StringSliceVarP(&config.Targets, "target", "t", illuminated.DefaultConfig.Targets, "target languages (ISO 639-1 codes)")
 }
