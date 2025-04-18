@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"net/url"
 	"os"
+	"path"
 	"path/filepath"
 )
 
@@ -15,14 +16,15 @@ var (
 
 // Stage validates source and stages files in a staging directory,
 // optionally deleting the files on completion if cleanup is true.
-func Stage(source string) error {
+func Stage(source string, projectDir string) error {
 	parsedURL, err := url.Parse(source)
 	if err == nil && parsedURL.Scheme != "" && parsedURL.Host != "" {
 		slog.Debug("fetching remote wiki", "URL", parsedURL)
 		// TODO fetch remote wiki
 		return fmt.Errorf("remote GitHub wiki URL fetching not implemented")
 	}
-	err = os.MkdirAll("staging", 0755)
+
+	err = os.MkdirAll(path.Join(projectDir, DefaultDirNameStaging), os.ModePerm)
 	if err != nil {
 		return fmt.Errorf("create staging: %v", err)
 	}
@@ -42,13 +44,19 @@ func Stage(source string) error {
 				slog.Debug("ignoring directory", "name", entry.Name())
 				continue
 			}
-			err = copy(filepath.Join(source, entry.Name()), filepath.Join(DefaultDirNameStaging, entry.Name()))
+			err = copy(
+				filepath.Join(source, entry.Name()),
+				filepath.Join(projectDir, DefaultDirNameStaging, entry.Name()),
+			)
 			if err != nil {
 				return fmt.Errorf("stage file %q from dir: %v", entry.Name(), err)
 			}
 		}
 	} else {
-		err = copy(source, filepath.Join(DefaultDirNameStaging, filepath.Base(source)))
+		err = copy(
+			source,
+			filepath.Join(projectDir, DefaultDirNameStaging, filepath.Base(source)),
+		)
 		if err != nil {
 			return fmt.Errorf("stage single file: %v", err)
 		}

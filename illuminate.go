@@ -21,7 +21,7 @@ import (
 // Process an input markdown file into parts:
 //   - <DirTranslations>/<lang>.json       (translation strings)
 //   - <DirTranslations>/<file>.html.tmpl  (go template)
-func Process(input string) error {
+func Process(input string, projectDir string) error {
 	var counter int
 	var translationStrings = make(map[string]string)
 	doc, err := parse(input)
@@ -35,11 +35,12 @@ func Process(input string) error {
 	baseName := strings.TrimSuffix(path.Base(input), path.Ext(input))
 
 	// json
-	err = os.MkdirAll(DefaultDirNameTranslations, os.ModePerm)
+	dirTranslations := path.Join(projectDir, DefaultDirNameTranslations)
+	err = os.MkdirAll(dirTranslations, os.ModePerm)
 	if err != nil {
-		return fmt.Errorf("create directory %q: %v", DefaultDirNameTranslations, err)
+		return fmt.Errorf("create directory %q: %v", dirTranslations, err)
 	}
-	jsonOut := path.Join(DefaultDirNameTranslations, fmt.Sprintf("%s.%s.json", DefaultConfig.Base, baseName))
+	jsonOut := path.Join(dirTranslations, fmt.Sprintf("%s.%s.json", DefaultConfig.Base, baseName))
 	err = writeJSON(jsonOut, translationStrings)
 	if err != nil {
 		return fmt.Errorf("write %v: %v", jsonOut, err)
@@ -47,11 +48,12 @@ func Process(input string) error {
 	slog.Info("translation strings written", "file", jsonOut)
 
 	// template
-	err = os.MkdirAll(DefaultDirNameTemplates, os.ModePerm)
+	dirTemplates := path.Join(projectDir, DefaultDirNameTemplates)
+	err = os.MkdirAll(dirTemplates, os.ModePerm)
 	if err != nil {
-		return fmt.Errorf("create directory %v: %v", DefaultDirNameTemplates, err)
+		return fmt.Errorf("create directory %v: %v", dirTemplates, err)
 	}
-	tmplOut := path.Join(DefaultDirNameTemplates, fmt.Sprintf("%s.html.tmpl", baseName))
+	tmplOut := path.Join(dirTemplates, fmt.Sprintf("%s.html.tmpl", baseName))
 	err = writeHTML(tmplOut, doc)
 	if err != nil {
 		return fmt.Errorf("write HTML template: %v", err)
@@ -63,10 +65,10 @@ func Process(input string) error {
 // Generate combines <DirTranslation>/<lang>.json and <DirTemplates>/html.tmpl to make:
 //   - <DirOutput>/<lang>.<name>.html
 //   - <DirOutput>/<lang>.<name>.pdf
-func Generate(name string, langCode string) error {
+func Generate(name string, langCode string, projectDir string) error {
 	htmlOut := fmt.Sprintf("%s.%s.html", langCode, name)
-	targetTemplate := path.Join(DefaultDirNameTemplates, fmt.Sprintf("%s.html.tmpl", name))
-	targetTranslations := path.Join(DefaultDirNameTranslations, fmt.Sprintf("%s.%s.json", langCode, name))
+	targetTemplate := path.Join(projectDir, DefaultDirNameTemplates, fmt.Sprintf("%s.html.tmpl", name))
+	targetTranslations := path.Join(projectDir, DefaultDirNameTranslations, fmt.Sprintf("%s.%s.json", langCode, name))
 	f, err := os.ReadFile(targetTranslations)
 	if err != nil {
 		return fmt.Errorf("read translation file %v: %v", targetTranslations, err)
@@ -90,15 +92,16 @@ func Generate(name string, langCode string) error {
 	}
 
 	// generate html
+	dirOut := path.Join(projectDir, DefaultDirNameOutput)
 	tmpl, err := template.ParseFiles(targetTemplate)
 	if err != nil {
 		return fmt.Errorf("parse template %v: %v", targetTemplate, err)
 	}
-	err = os.MkdirAll(DefaultDirNameOutput, os.ModePerm)
+	err = os.MkdirAll(dirOut, os.ModePerm)
 	if err != nil {
 		return fmt.Errorf("create directory %v: %v", DefaultDirNameOutput, err)
 	}
-	outFile, err := os.Create(path.Join(DefaultDirNameOutput, htmlOut))
+	outFile, err := os.Create(path.Join(dirOut, htmlOut))
 	if err != nil {
 		return fmt.Errorf("create template %v: %v", htmlOut, err)
 	}

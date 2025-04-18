@@ -18,7 +18,7 @@ var generateCmd = &cobra.Command{
 	PreRun: func(cmd *cobra.Command, args []string) { Init() },
 	Run: func(cmd *cobra.Command, args []string) {
 		// TODO don't hardcode this
-		err := illuminated.Generate("downloads", "en")
+		err := illuminated.Generate("downloads", "en", projectDir)
 		if err != nil {
 			slog.Error("generate", "error", err)
 			os.Exit(1)

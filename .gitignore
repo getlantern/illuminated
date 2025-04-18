@@ -1,2 +1,5 @@
 # ignore default project name as may be created during testing or use
 illuminated-project/* 
+
+# ignore built binary
+illuminated

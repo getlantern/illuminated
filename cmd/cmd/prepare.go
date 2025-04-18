@@ -3,6 +3,7 @@ package cmd
 import (
 	"log/slog"
 	"os"
+	"path"
 	"path/filepath"
 
 	"github.com/getlantern/illuminated"
@@ -16,7 +17,7 @@ var prepareCmd = &cobra.Command{
 	PreRun: func(cmd *cobra.Command, args []string) { Init() },
 	Run: func(cmd *cobra.Command, args []string) {
 		// stage
-		err := illuminated.Stage(source)
+		err := illuminated.Stage(source, projectDir)
 		if err != nil {
 			slog.Error("unable to stage selected source", "error", err)
 			os.Exit(1)
@@ -24,7 +25,7 @@ var prepareCmd = &cobra.Command{
 		slog.Debug("source files staged")
 
 		// process
-		files, err := os.ReadDir(illuminated.DefaultDirNameStaging)
+		files, err := os.ReadDir(path.Join(projectDir, illuminated.DefaultDirNameStaging))
 		if err != nil {
 			slog.Error("read staging directory", "error", err)
 			os.Exit(1)
@@ -34,9 +35,9 @@ var prepareCmd = &cobra.Command{
 				slog.Warn("skipping dir (expects only files)", "name", file.Name())
 				continue
 			}
-			filePath := filepath.Join(illuminated.DefaultDirNameStaging, file.Name())
+			filePath := filepath.Join(projectDir, illuminated.DefaultDirNameStaging, file.Name())
 			slog.Debug("processing file", "file", filePath)
-			err := illuminated.Process(filePath)
+			err := illuminated.Process(filePath, projectDir)
 			if err != nil {
 				slog.Error("process file", "file", filePath, "error", err)
 				os.Exit(1)

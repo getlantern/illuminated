@@ -15,18 +15,17 @@ var (
 		Base:    "en",
 		Targets: []string{"en", "zh"},
 	}
-	// BaseLang                   = "en"           // ISO 639-1 language code
 	DefaultDirNameStaging      = "staging"      // copies of source and intermediate files
-	DefaultDirNameOutput       = "output"       // final output (typically PDF)
 	DefaultDirNameTranslations = "translations" // translation files for internationalization
 	DefaultDirNameTemplates    = "templates"    // template to recreate localized copies
+	DefaultDirNameOutput       = "output"       // final output (typically PDF)
 )
 
 // Config defines the base language from which all translations will be derived,
 // and all languages that will be translated (assumes ISO 639-1 codes).
 type Config struct {
-	Base    string   `json:"base"`
-	Targets []string `json:"target"`
+	Base    string   `json:"base"`   // original source language
+	Targets []string `json:"target"` // translated languages
 }
 
 // Write creates a config file in the specified directory.

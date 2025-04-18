@@ -11,8 +11,9 @@ var (
 
 // initCmd represents the init command
 var initCmd = &cobra.Command{
-	Use:   "init",
-	Short: "initialize illuminated with non-default options",
+	Use:    "init",
+	Short:  "initialize illuminated with non-default options",
+	PreRun: func(cmd *cobra.Command, args []string) { Init() },
 	Run: func(cmd *cobra.Command, args []string) {
 		err := illuminated.DefaultConfig.Write(projectDir)
 		if err != nil {
