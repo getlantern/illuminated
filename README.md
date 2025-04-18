@@ -46,8 +46,9 @@ flowchart LR
 - [x] write unit tests
 - [x] generate TOC
 - [x] implement fallback to base language
-- [ ] append multiple docs
-- [ ] create mechanism for warning on uncurrent translations
+- [x] append multiple docs
+- [x] create mechanism for warning on uncurrent translations
+- [ ] support style
 - [ ] support pictures
-- [ ] test E2E (including Pandoc calls) in CI
 - [ ] handle footer
+- [ ] test E2E (including Pandoc calls) in CI

@@ -20,7 +20,7 @@ var (
 	strict bool
 	// join HTML files into single document or split into individual files?
 	join      bool
-	html, pdf bool
+	html, pdf bool // output formats
 )
 
 // generateCmd represents the generate command
@@ -74,10 +74,10 @@ var generateCmd = &cobra.Command{
 		if err != nil {
 			return fmt.Errorf("write PDF: %v", err)
 		}
-		// err = os.Remove(joinedFilePath)
-		// if err != nil {
-		// 	return fmt.Errorf("remove joined HTML after PDF creation: %v", err)
-		// }
+		err = os.Remove(joinedFilePath)
+		if err != nil {
+			return fmt.Errorf("remove joined HTML after PDF creation: %v", err)
+		}
 		return nil
 	},
 }

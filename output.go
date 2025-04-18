@@ -6,7 +6,9 @@ import (
 	"log/slog"
 	"os"
 	"os/exec"
+	"path"
 	"strings"
+	"time"
 
 	"golang.org/x/net/html"
 )
@@ -53,7 +55,14 @@ func WritePDF(sourcePath, outPath string) error {
 		return fmt.Errorf("format breaks in HTML: %w", err)
 	}
 
-	cmd := exec.Command("pandoc", "--toc", sourcePath, "-o", outPath)
+	title := strings.TrimSuffix(sourcePath, ".html")
+	cmd := exec.Command(
+		"pandoc",
+		"--metadata", fmt.Sprintf("title=%s", path.Base(title)),
+		"--metadata", fmt.Sprintf("date=%s", time.Now().Format("2006-01-02")),
+		"--toc",
+		sourcePath, "-o", outPath,
+	)
 	err = cmd.Run()
 	if err != nil {
 		return fmt.Errorf("execute pandoc command: %w", err)
@@ -67,13 +76,12 @@ func formatBreaks(filepathHTML string) error {
 	if err != nil {
 		return fmt.Errorf("read HTML file: %v", err)
 	}
-	htmlContent = []byte(fmt.Sprintf(`<!DOCTYPE html><html lang="en">%s</html>`, string(htmlContent)))
 
 	// Add a page break before every <h1> tag
 	modifiedHTML := strings.ReplaceAll(
 		string(htmlContent),
 		"<h1>",
-		`<br><h1>`,
+		`<br><br><br><br><br><h1>`,
 		// FEATURE: add proper page break before each chapter
 		// `<div style="display:block; clear:both; page-break-before:always;"></div><h1>`,
 	)
