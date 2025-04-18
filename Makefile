@@ -7,7 +7,7 @@ build:
 
 run: 
 	echo "cleanup..."
-	./illuminated cleanup
+	./illuminated cleanup --force
 	echo "init..."
 	./illuminated init
 	echo "prepare..."

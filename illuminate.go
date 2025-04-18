@@ -112,8 +112,11 @@ func Generate(name string, langCode string, projectDir string) error {
 	}
 
 	// generate pdf
-	pdfOut := fmt.Sprintf("%s.%s.pdf", langCode, name)
-	err = writePDF(path.Join(DefaultDirNameOutput, htmlOut), pdfOut)
+	pdfOut := path.Join(dirOut, fmt.Sprintf("%s.%s.pdf", langCode, name))
+	err = writePDF(
+		path.Join(projectDir, DefaultDirNameOutput, htmlOut),
+		pdfOut,
+	)
 	if err != nil {
 		return fmt.Errorf("generate PDF: %v", err)
 	}
