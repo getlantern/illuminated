@@ -4,27 +4,32 @@ Copyright © 2025 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
+	"fmt"
 	"log/slog"
 	"os"
 	"path"
-	"path/filepath"
-	"strings"
 
 	"github.com/getlantern/illuminated"
 	"github.com/spf13/cobra"
 )
 
-// strict defines whether the generate command should
-//   - true: fail on missing translations
-//   - false: fallback to base lang, but warn
-var strict bool
+var (
+	// strict defines whether the generate command should
+	//   - true: fail on missing translations
+	//   - false: fallback to base lang, but warn
+	strict bool
+	// join HTML files into single document or split into individual files?
+	join      bool
+	html, pdf bool
+)
 
 // generateCmd represents the generate command
 var generateCmd = &cobra.Command{
 	Use:    "generate",
 	Short:  "generate published files from prepared templates and translations",
 	PreRun: func(cmd *cobra.Command, args []string) { Init() },
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
+		// load and validate config
 		var config illuminated.Config
 		err := config.Read(path.Join(projectDir, illuminated.DefaultConfigFilename))
 		if err != nil {
@@ -32,45 +37,53 @@ var generateCmd = &cobra.Command{
 			os.Exit(1)
 		}
 		slog.Debug("config read", "config", config)
+		if len(config.Targets) == 0 {
+			slog.Error("no target languages defined in config")
+			os.Exit(1)
+		}
+		if config.Base == "" {
+			slog.Error("no base language defined in config")
+			os.Exit(1)
+		}
 
-		// load config
-		// if strict, verify that every language in config.Targets exists in translations
+		err = illuminated.GenerateHTMLs(config.Base, config.Targets, projectDir, strict)
+		if err != nil {
+			return fmt.Errorf("generate HTMLs: %v", err)
+		}
 
-		// look for and parse Home.md as TOC, or just use alphabetical
+		// FEATURE: take name on input instead of defaulting to projectDir
+		name := projectDir
 
-		// generate all docs consolidated into one doc
-
-		for _, lang := range config.Targets {
-			slog.Debug("generating documents for language", "lang", lang)
-
-			err = filepath.Walk(path.Join(projectDir, illuminated.DefaultDirNameTranslations), func(p string, info os.FileInfo, err error) error {
-				slog.Info("walking project directory", "path", p)
+		var joinedFilePath string
+		if join {
+			for _, lang := range config.Targets {
+				joinedFilePath, err = illuminated.JoinHTML(lang, projectDir, name)
 				if err != nil {
-					slog.Error("walk project directory", "error", err)
-					return err
+					return fmt.Errorf("join HTMLs: %v", err)
 				}
-				if info.IsDir() {
-					return nil
-				}
-				name := path.Base(p)
-				name = strings.TrimPrefix(name, lang+".")
-				name = strings.TrimSuffix(name, ".json")
-				slog.Info("generating document", "file", p)
-				err = illuminated.Generate(name, lang, projectDir)
-				return err
-			})
-			if err != nil {
-				slog.Error("generate documents", "error", err)
-				os.Exit(1)
 			}
 		}
+		if html {
+			return nil
+		}
+
+		err = illuminated.WritePDF(
+			path.Join(projectDir, illuminated.DefaultDirNameOutput, joinedFilePath),
+			path.Join(projectDir, illuminated.DefaultDirNameOutput, name+".pdf"),
+		)
+		if err != nil {
+			return fmt.Errorf("write PDF: %v", err)
+		}
+
+		return nil
 	},
 }
 
 func init() {
 	rootCmd.AddCommand(generateCmd)
 	generateCmd.PersistentFlags().BoolVarP(&strict, "strict", "s", false, "strict mode (fail on missing translations)")
-	// generateCmd.MarkFlagsOneRequired("html", "pdf")
-	// generateCmd.PersistentFlags().BoolVarP(&html, "html", "h", false, "generate HTML output")
-	// generateCmd.PersistentFlags().BoolVarP(&pdf, "pdf", "p", false, "generate PDF output")
+	generateCmd.PersistentFlags().BoolVarP(&join, "join", "j", false, "join all documents into one")
+	generateCmd.PersistentFlags().BoolVarP(&html, "html", "m", false, "generate HTML output")
+	generateCmd.PersistentFlags().BoolVarP(&pdf, "pdf", "p", false, "generate PDF output")
+	generateCmd.MarkFlagsOneRequired("html", "pdf")
 }

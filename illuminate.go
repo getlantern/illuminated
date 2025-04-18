@@ -62,73 +62,20 @@ func Process(input string, projectDir string) error {
 	return nil
 }
 
-// Generate combines <DirTranslation>/<lang>.json and <DirTemplates>/html.tmpl to make:
-//   - <DirOutput>/<lang>.<name>.html
-//   - <DirOutput>/<lang>.<name>.pdf
-func Generate(name string, langCode string, projectDir string) error {
-	slog.Debug("generating document",
-		"translation", name,
-		"lang", langCode,
-	)
-
-	htmlOut := fmt.Sprintf("%s.%s.html", langCode, name)
-	targetTemplate := path.Join(projectDir, DefaultDirNameTemplates, fmt.Sprintf("%s.html.tmpl", name))
-	targetTranslations := path.Join(projectDir, DefaultDirNameTranslations, fmt.Sprintf("%s.%s.json", langCode, name))
-	f, err := os.ReadFile(targetTranslations)
-	if err != nil {
-		return fmt.Errorf("read translation file %v: %v", targetTranslations, err)
-	}
-	var translations map[string]string
-	err = json.Unmarshal(f, &translations)
-	if err != nil {
-		return fmt.Errorf("unmarshal translation file %v: %v", targetTranslations, err)
-	}
-
-	// TODO check for missing translations
-	fallbackNecessary := false
-	for _, v := range translations {
-		if v == "" {
-			fallbackNecessary = true
-		}
-	}
-	if fallbackNecessary {
-		slog.Warn("translation missing", "file", targetTranslations)
-		// TODO fallback to base lang selectively
-	}
-
-	// generate html
-	dirOut := path.Join(projectDir, DefaultDirNameOutput)
-	tmpl, err := template.ParseFiles(targetTemplate)
-	if err != nil {
-		return fmt.Errorf("parse template %v: %v", targetTemplate, err)
-	}
-	err = os.MkdirAll(dirOut, os.ModePerm)
-	if err != nil {
-		return fmt.Errorf("create directory %v: %v", DefaultDirNameOutput, err)
-	}
-	outFile, err := os.Create(path.Join(dirOut, htmlOut))
-	if err != nil {
-		return fmt.Errorf("create template %v: %v", htmlOut, err)
-	}
-	defer outFile.Close()
-	err = tmpl.Execute(outFile, translations)
-	if err != nil {
-		return fmt.Errorf("execute template: %v", err)
-	}
-
-	// generate pdf
-	pdfOut := path.Join(dirOut, fmt.Sprintf("%s.%s.pdf", langCode, name))
-	err = writePDF(
-		path.Join(projectDir, DefaultDirNameOutput, htmlOut),
-		pdfOut,
-	)
-	if err != nil {
-		return fmt.Errorf("generate PDF: %v", err)
-	}
-	slog.Info("generated", "pdf", pdfOut, "html", htmlOut)
-
-	return nil
-}
+// // generate pdf
+// pdfOut := path.Join(dirOut, fmt.Sprintf("%s.%s.pdf", langCode, name))
+// err = writePDF(
+//
+//	path.Join(projectDir, DefaultDirNameOutput, htmlOut),
+//	pdfOut,
+//
+// )
+//
+//	if err != nil {
+//		return fmt.Errorf("generate PDF: %v", err)
+//	}
+//
+// slog.Info("generated", "pdf", pdfOut, "html", htmlOut)
 
 // extract extracts innerHTML strings into a map and
 // replaces innerHTML with placeholders for internationalization.
@@ -162,4 +109,162 @@ func parse(inputPath string) (*html.Node, error) {
 		return nil, fmt.Errorf("parse html: %w", err)
 	}
 	return doc, nil
+}
+
+// GenerateHTMLs parses all translations and generates HTML output for all files.
+// If strict is true, it will fail if any translation is missing, but
+// when strict is false, base language will be substituted for any missing translations.
+func GenerateHTMLs(baseLang string, targetLang []string, projectDir string, strict bool) error {
+	slog.Debug("generating HTMLs",
+		"baseLang", baseLang,
+		"targetLang", targetLang,
+		"projectDir", projectDir,
+		"strict", strict,
+	)
+
+	// set base translation as fallback
+	baseTx := make(map[string]map[string]string)
+	dirTx, err := os.ReadDir(path.Join(projectDir, DefaultDirNameTranslations))
+	if err != nil {
+		return fmt.Errorf("read translations directory: %v", err)
+	}
+	for _, f := range dirTx {
+		if strings.HasPrefix(f.Name(), baseLang+".") {
+			fileTx := make(map[string]string)
+			baseTxFile := path.Join(
+				projectDir,
+				DefaultDirNameTranslations,
+				f.Name(),
+			)
+			slog.Debug("reading base translation file", "file", baseTxFile)
+			f, err := os.ReadFile(baseTxFile)
+			if err != nil {
+				return fmt.Errorf("read base translation file %v: %v", baseTxFile, err)
+			}
+			err = json.Unmarshal(f, &fileTx)
+			if err != nil {
+				return fmt.Errorf("unmarshal base translation file %v: %v", baseTxFile, err)
+			}
+			baseTx[baseLang] = fileTx
+		}
+	}
+
+	// generate translated HTMLs
+	for _, lang := range targetLang {
+		// populate target translation map
+		// lang.file.key
+		targetTx := make(map[string]map[string]string)
+		for _, file := range dirTx {
+			if strings.HasPrefix(file.Name(), lang+".") {
+				fileTx := make(map[string]string)
+				targetTxFile := path.Join(
+					projectDir,
+					DefaultDirNameTranslations,
+					file.Name(),
+				)
+				slog.Debug("reading target translation file", "file", targetTxFile)
+				f, err := os.ReadFile(targetTxFile)
+				if err != nil {
+					return fmt.Errorf("read target translation file %v: %v", targetTxFile, err)
+				}
+				err = json.Unmarshal(f, &fileTx)
+				if err != nil {
+					return fmt.Errorf("unmarshal target translation file %v: %v", targetTxFile, err)
+				}
+				targetTx[file.Name()] = fileTx
+			}
+		}
+
+		// validate and/or substitute depending on strict mode
+		for filename, file := range targetTx {
+			for k, v := range file {
+				if v == "" {
+					if strict {
+						return fmt.Errorf("missing translation %q in %q", k, file)
+					} else {
+						slog.Warn("missing translation, substituting base lang string",
+							"key", k,
+							"file", file,
+							"baseLang", baseLang,
+							"targetLang", lang,
+							"baseTx", baseTx[baseLang][k],
+						)
+					}
+					targetTx[filename][k] = baseTx[filename][k]
+				}
+			}
+		}
+
+		// generate HTML files
+		dirOut := path.Join(projectDir, DefaultDirNameOutput)
+		err = os.MkdirAll(dirOut, os.ModePerm)
+		if err != nil {
+			return fmt.Errorf("create output directory %v: %v", DefaultDirNameOutput, err)
+		}
+		for _, file := range dirTx {
+			outFile := fmt.Sprintf("%s.%s.html", lang, strings.TrimPrefix(file.Name(), lang+"."))
+			fo, err := os.Create(path.Join(dirOut, outFile))
+			if err != nil {
+				return fmt.Errorf("create output file %v: %v", outFile, err)
+			}
+			defer fo.Close()
+			tmplFilename := strings.TrimPrefix(file.Name(), lang+".")
+			tmplFilename = strings.TrimSuffix(tmplFilename, path.Ext(tmplFilename)) + ".html.tmpl"
+			tmpl, err := template.ParseFiles(path.Join(
+				projectDir,
+				DefaultDirNameTemplates,
+				tmplFilename,
+			))
+			if err != nil {
+				return fmt.Errorf("parse template %v: %v", tmplFilename, err)
+			}
+			err = tmpl.Execute(fo, targetTx[file.Name()])
+			if err != nil {
+				return fmt.Errorf("execute template %v: %v", file.Name(), err)
+			}
+			slog.Info("generated HTML", "file", outFile)
+		}
+	}
+	return nil
+}
+
+func JoinHTML(language string, projectDir string, name string) (string, error) {
+	outputDir := path.Join(projectDir, DefaultDirNameOutput)
+	files, err := os.ReadDir(outputDir)
+	if err != nil {
+		return "", fmt.Errorf("read output directory: %v", err)
+	}
+	joinedFilePath := path.Join(outputDir, fmt.Sprintf("%s.html", name))
+	joinedFile, err := os.Create(joinedFilePath)
+	if err != nil {
+		return "", fmt.Errorf("create consolidated file: %v", err)
+	}
+	defer joinedFile.Close()
+
+	for _, file := range files {
+		if file.IsDir() {
+			slog.Warn("skipping unexpected directory in output dir", "name", file.Name())
+			continue
+		}
+		if !strings.HasPrefix(file.Name(), language+".") || !strings.HasSuffix(file.Name(), ".html") {
+			slog.Debug("skipping file", "name", file.Name())
+			continue
+		}
+
+		filePath := path.Join(outputDir, file.Name())
+		content, err := os.ReadFile(filePath)
+		if err != nil {
+			return "", fmt.Errorf("read file %v: %v", file.Name(), err)
+		}
+
+		_, err = joinedFile.Write(content)
+		if err != nil {
+			return "", fmt.Errorf("write to consolidated file: %v", err)
+		}
+		err = os.Remove(filePath)
+		if err != nil {
+			return "", fmt.Errorf("delete file %v: %v", file.Name(), err)
+		}
+	}
+	return joinedFilePath, nil
 }

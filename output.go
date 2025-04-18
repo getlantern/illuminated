@@ -42,9 +42,9 @@ func writeHTML(path string, doc *html.Node) error {
 	return nil
 }
 
-// writePDF calls pandoc to output a PDF from a source file (HTML expected).
-func writePDF(sourcePath, outPath string) error {
-	cmd := exec.Command("pandoc", sourcePath, "-o", outPath)
+// WritePDF calls pandoc to output a PDF from a source file (HTML expected).
+func WritePDF(sourcePath, outPath string) error {
+	cmd := exec.Command("pandoc", "--toc", sourcePath, "-o", outPath)
 	err := cmd.Run()
 	if err != nil {
 		return fmt.Errorf("execute pandoc command: %w", err)

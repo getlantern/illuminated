@@ -32,7 +32,7 @@ var prepareCmd = &cobra.Command{
 		}
 		for _, file := range files {
 			if file.IsDir() {
-				slog.Warn("skipping dir (expects only files)", "name", file.Name())
+				slog.Debug("skipping dir (expects only files)", "name", file.Name())
 				continue
 			}
 			filePath := filepath.Join(projectDir, illuminated.DefaultDirNameStaging, file.Name())

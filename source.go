@@ -16,6 +16,8 @@ var (
 	ErrSourceValidation = fmt.Errorf("source must be a valid file, directory, or GitHub wiki")
 )
 
+// Stage prepares the source files for processing by copying them to illuminated.DefaultDirNameStaging.
+// Accepted source includes: local file, directories, or remote GitHub wiki URLs.
 func Stage(source string, projectDir string) error {
 	parsedURL, err := url.Parse(source)
 	if err == nil && parsedURL.Scheme != "" && parsedURL.Host != "" {
@@ -89,6 +91,7 @@ func copy(src, dst string) error {
 	return nil
 }
 
+// cloneRepo shallow clones a Git repository from the given URL to the specified path.
 func cloneRepo(url, path string) error {
 	if _, err := os.Stat(path); !os.IsNotExist(err) {
 		slog.Warn("repo already exists, replacing", "path", path)
@@ -106,6 +109,5 @@ func cloneRepo(url, path string) error {
 	if err != nil {
 		return fmt.Errorf("failed to clone repository: %v", err)
 	}
-
 	return nil
 }

@@ -43,10 +43,11 @@ flowchart LR
 
 ## MVP TODO
 - [x] read from ~dir~ or ~wiki source~
-- [ ] append multiple docs
-- [ ] support pictures
-- [ ] generate TOC
 - [x] write unit tests
-- [ ] test E2E (including Pandoc calls) in CI
+- [x] generate TOC
 - [x] implement fallback to base language
+- [ ] append multiple docs
 - [ ] create mechanism for warning on uncurrent translations
+- [ ] support pictures
+- [ ] test E2E (including Pandoc calls) in CI
+- [ ] handle footer
