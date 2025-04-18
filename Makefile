@@ -11,4 +11,6 @@ run:
 	echo "init..."
 	./illuminated init
 	echo "prepare..."
-	./illuminated prepare -s https://github.com/getlantern/guide.wiki.git
+	# ./illuminated prepare -s https://github.com/getlantern/guide.wiki.git
+	./illuminated prepare -s example
+	

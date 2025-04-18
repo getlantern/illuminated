@@ -3,8 +3,10 @@ package illuminated
 import (
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"os"
 	"os/exec"
+	"strings"
 
 	"golang.org/x/net/html"
 )
@@ -44,10 +46,43 @@ func writeHTML(path string, doc *html.Node) error {
 
 // WritePDF calls pandoc to output a PDF from a source file (HTML expected).
 func WritePDF(sourcePath, outPath string) error {
+	slog.Debug("calling pandoc to write write from HTML", "source", sourcePath, "out", outPath)
+
+	err := formatBreaks(sourcePath)
+	if err != nil {
+		return fmt.Errorf("format breaks in HTML: %w", err)
+	}
+
 	cmd := exec.Command("pandoc", "--toc", sourcePath, "-o", outPath)
-	err := cmd.Run()
+	err = cmd.Run()
 	if err != nil {
 		return fmt.Errorf("execute pandoc command: %w", err)
 	}
+	return nil
+}
+
+func formatBreaks(filepathHTML string) error {
+	// Read the HTML file
+	htmlContent, err := os.ReadFile(filepathHTML)
+	if err != nil {
+		return fmt.Errorf("read HTML file: %v", err)
+	}
+	htmlContent = []byte(fmt.Sprintf(`<!DOCTYPE html><html lang="en">%s</html>`, string(htmlContent)))
+
+	// Add a page break before every <h1> tag
+	modifiedHTML := strings.ReplaceAll(
+		string(htmlContent),
+		"<h1>",
+		`<br><h1>`,
+		// FEATURE: add proper page break before each chapter
+		// `<div style="display:block; clear:both; page-break-before:always;"></div><h1>`,
+	)
+
+	// Write the modified HTML back to the file
+	err = os.WriteFile(filepathHTML, []byte(modifiedHTML), 0644)
+	if err != nil {
+		return fmt.Errorf("write modified HTML: %v", err)
+	}
+
 	return nil
 }

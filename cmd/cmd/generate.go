@@ -68,13 +68,16 @@ var generateCmd = &cobra.Command{
 		}
 
 		err = illuminated.WritePDF(
-			path.Join(projectDir, illuminated.DefaultDirNameOutput, joinedFilePath),
+			path.Join(joinedFilePath),
 			path.Join(projectDir, illuminated.DefaultDirNameOutput, name+".pdf"),
 		)
 		if err != nil {
 			return fmt.Errorf("write PDF: %v", err)
 		}
-
+		// err = os.Remove(joinedFilePath)
+		// if err != nil {
+		// 	return fmt.Errorf("remove joined HTML after PDF creation: %v", err)
+		// }
 		return nil
 	},
 }
