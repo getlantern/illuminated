@@ -45,7 +45,7 @@ func Process(input string, projectDir string) error {
 	if err != nil {
 		return fmt.Errorf("write %v: %v", jsonOut, err)
 	}
-	slog.Info("translation strings written", "file", jsonOut)
+	slog.Debug("translation strings written", "file", jsonOut)
 
 	// template
 	dirTemplates := path.Join(projectDir, DefaultDirNameTemplates)
@@ -58,7 +58,7 @@ func Process(input string, projectDir string) error {
 	if err != nil {
 		return fmt.Errorf("write HTML template: %v", err)
 	}
-	slog.Info("HTML template written", "file", tmplOut)
+	slog.Debug("HTML template written", "file", tmplOut)
 	return nil
 }
 
@@ -66,6 +66,11 @@ func Process(input string, projectDir string) error {
 //   - <DirOutput>/<lang>.<name>.html
 //   - <DirOutput>/<lang>.<name>.pdf
 func Generate(name string, langCode string, projectDir string) error {
+	slog.Debug("generating document",
+		"translation", name,
+		"lang", langCode,
+	)
+
 	htmlOut := fmt.Sprintf("%s.%s.html", langCode, name)
 	targetTemplate := path.Join(projectDir, DefaultDirNameTemplates, fmt.Sprintf("%s.html.tmpl", name))
 	targetTranslations := path.Join(projectDir, DefaultDirNameTranslations, fmt.Sprintf("%s.%s.json", langCode, name))

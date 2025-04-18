@@ -7,6 +7,8 @@ import (
 	"log/slog"
 	"os"
 	"path"
+	"path/filepath"
+	"strings"
 
 	"github.com/getlantern/illuminated"
 	"github.com/spf13/cobra"
@@ -30,14 +32,37 @@ var generateCmd = &cobra.Command{
 			os.Exit(1)
 		}
 		slog.Debug("config read", "config", config)
+
+		// load config
+		// if strict, verify that every language in config.Targets exists in translations
+
+		// look for and parse Home.md as TOC, or just use alphabetical
+
+		// generate all docs consolidated into one doc
+
 		for _, lang := range config.Targets {
-			slog.Debug("generating document", "lang", lang)
-			err = illuminated.Generate("downloads", lang, projectDir)
+			slog.Debug("generating documents for language", "lang", lang)
+
+			err = filepath.Walk(path.Join(projectDir, illuminated.DefaultDirNameTranslations), func(p string, info os.FileInfo, err error) error {
+				slog.Info("walking project directory", "path", p)
+				if err != nil {
+					slog.Error("walk project directory", "error", err)
+					return err
+				}
+				if info.IsDir() {
+					return nil
+				}
+				name := path.Base(p)
+				name = strings.TrimPrefix(name, lang+".")
+				name = strings.TrimSuffix(name, ".json")
+				slog.Info("generating document", "file", p)
+				err = illuminated.Generate(name, lang, projectDir)
+				return err
+			})
 			if err != nil {
-				slog.Error("generate document", "lang", lang, "error", err)
+				slog.Error("generate documents", "error", err)
 				os.Exit(1)
 			}
-			// TODO make real
 		}
 	},
 }

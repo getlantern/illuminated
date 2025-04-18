@@ -42,10 +42,11 @@ flowchart LR
 | publish | Translated files are combined into single PDF per language. |
 
 ## MVP TODO
-- [ ] read from ~dir~ or wiki source
+- [x] read from ~dir~ or ~wiki source~
 - [ ] append multiple docs
+- [ ] support pictures
 - [ ] generate TOC
-- [ ] write unit tests
+- [x] write unit tests
 - [ ] test E2E (including Pandoc calls) in CI
-- [x] implement fallback to base language 
+- [x] implement fallback to base language
 - [ ] create mechanism for warning on uncurrent translations

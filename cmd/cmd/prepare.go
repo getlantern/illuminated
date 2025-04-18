@@ -42,7 +42,7 @@ var prepareCmd = &cobra.Command{
 				slog.Error("process file", "file", filePath, "error", err)
 				os.Exit(1)
 			}
-			slog.Info("processed", "doc", filePath)
+			slog.Debug("processed document", "doc", filePath)
 		}
 	},
 }
