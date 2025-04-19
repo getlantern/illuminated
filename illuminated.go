@@ -24,11 +24,11 @@ import (
 func Process(input string, projectDir string) error {
 	var counter int
 	var translationStrings = make(map[string]string)
-	doc, err := parse(input)
+	doc, err := parseHTML(input)
 	if err != nil {
 		return fmt.Errorf("parse input: %v", err)
 	}
-	extract(doc, translationStrings, &counter)
+	extractInnerHTML(doc, translationStrings, &counter)
 	for k, v := range translationStrings {
 		slog.Debug("extracted", "key", k, "value", v, "file", input)
 	}
@@ -59,27 +59,13 @@ func Process(input string, projectDir string) error {
 		return fmt.Errorf("write HTML template: %v", err)
 	}
 	slog.Debug("HTML template written", "file", tmplOut)
+
 	return nil
 }
 
-// // generate pdf
-// pdfOut := path.Join(dirOut, fmt.Sprintf("%s.%s.pdf", langCode, name))
-// err = writePDF(
-//
-//	path.Join(projectDir, DefaultDirNameOutput, htmlOut),
-//	pdfOut,
-//
-// )
-//
-//	if err != nil {
-//		return fmt.Errorf("generate PDF: %v", err)
-//	}
-//
-// slog.Info("generated", "pdf", pdfOut, "html", htmlOut)
-
-// extract extracts innerHTML strings into a map and
+// extractInnerHTML extracts innerHTML strings into a map and
 // replaces innerHTML with placeholders for internationalization.
-func extract(n *html.Node, text map[string]string, counter *int) {
+func extractInnerHTML(n *html.Node, text map[string]string, counter *int) {
 	if n.Type == html.TextNode {
 		if len(strings.TrimSpace(n.Data)) > 0 {
 			*counter++                               // increment field number...
@@ -89,12 +75,12 @@ func extract(n *html.Node, text map[string]string, counter *int) {
 		}
 	}
 	for c := n.FirstChild; c != nil; c = c.NextSibling {
-		extract(c, text, counter)
+		extractInnerHTML(c, text, counter)
 	}
 }
 
-// parse converts markdown file to HTML object
-func parse(inputPath string) (*html.Node, error) {
+// parseHTML converts markdown file to HTML object
+func parseHTML(inputPath string) (*html.Node, error) {
 	f, err := os.ReadFile(path.Join(inputPath))
 	if err != nil {
 		return nil, fmt.Errorf("read file %q: %w", inputPath, err)
@@ -136,7 +122,7 @@ func GenerateHTMLs(baseLang string, targetLang []string, projectDir string, stri
 				DefaultDirNameTranslations,
 				f.Name(),
 			)
-			slog.Debug("reading base translation file", "file", baseTxFile)
+			slog.Debug("extracting base language translations strings", "file", baseTxFile)
 			f, err := os.ReadFile(baseTxFile)
 			if err != nil {
 				return fmt.Errorf("read base translation file %v: %v", baseTxFile, err)
@@ -226,45 +212,4 @@ func GenerateHTMLs(baseLang string, targetLang []string, projectDir string, stri
 		}
 	}
 	return nil
-}
-
-func JoinHTML(language string, projectDir string, name string) (string, error) {
-	outputDir := path.Join(projectDir, DefaultDirNameOutput)
-	files, err := os.ReadDir(outputDir)
-	if err != nil {
-		return "", fmt.Errorf("read output directory: %v", err)
-	}
-	joinedFilePath := path.Join(outputDir, fmt.Sprintf("%s.html", name))
-	joinedFile, err := os.Create(joinedFilePath)
-	if err != nil {
-		return "", fmt.Errorf("create consolidated file: %v", err)
-	}
-	defer joinedFile.Close()
-
-	for _, file := range files {
-		if file.IsDir() {
-			slog.Warn("skipping unexpected directory in output dir", "name", file.Name())
-			continue
-		}
-		if !strings.HasPrefix(file.Name(), language+".") || !strings.HasSuffix(file.Name(), ".html") {
-			slog.Debug("skipping file", "name", file.Name())
-			continue
-		}
-
-		filePath := path.Join(outputDir, file.Name())
-		content, err := os.ReadFile(filePath)
-		if err != nil {
-			return "", fmt.Errorf("read file %v: %v", file.Name(), err)
-		}
-
-		_, err = joinedFile.Write(content)
-		if err != nil {
-			return "", fmt.Errorf("write to consolidated file: %v", err)
-		}
-		err = os.Remove(filePath)
-		if err != nil {
-			return "", fmt.Errorf("delete file %v: %v", file.Name(), err)
-		}
-	}
-	return joinedFilePath, nil
 }

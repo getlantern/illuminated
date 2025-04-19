@@ -1,16 +1,18 @@
 .PHONY: all build run
 
-all: build run
+all: build
 
 build:
 	cd cmd && go build -o ../illuminated
 
-run: 
-	echo "cleanup..."
+testlocal:
 	./illuminated cleanup --force
-	echo "init..."
 	./illuminated init
-	echo "prepare..."
-	# ./illuminated prepare -s https://github.com/getlantern/guide.wiki.git
-	./illuminated prepare -s example
-	
+	./illuminated prepare --source example
+	./illuminated generate --join --pdf
+
+testremote:
+	./illuminated cleanup --force
+	./illuminated init
+	./illuminated prepare --source https://github.com/getlantern/guide.wiki.git
+	./illuminated generate --join --pdf

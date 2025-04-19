@@ -1,9 +1,9 @@
 # Downloads
 
-![Alt text](image.png)
+This is an example document for testing.
 
 ## GitHub
-All download files, including backups and beta releases:
+All download files, including backups and beta releases, are available at:
 https://github.com/getlantern
 
 ## Website
@@ -23,9 +23,21 @@ Send an email to any of the following email addresses to receive links to our ne
 | Iran | irandownloads@getlantern.org,  irandownload@getlantern.org |
 
 # Updating
-Open Lantern, and navigate to `Account` > `Settings` > `Check for Updates`. If an update cannot be completed in the application, simply download and install the latest version of Lantern to update.
+1. open Lantern
+2. navigate to `Account`
+3. select `Settings`
+4. choose `Check for Updates`
+
+If an update cannot be completed in the application, follow the [Downloads](#Downloads) instructions to update.
 
 ## Check Version
-Open Lantern, then navigate to `Account` > `Settings` and view your version number at the bottom of the screen.
+1. open Lantern
+2. navigate to `Account`
+3. select `Settings`
+4. version number is listed on bottom of the screen
 
-Check our [release notes](https://github.com/getlantern#release-notes) to see which version is newest, and always ensure you're updated to the latest version to ensure you have access to the latest protocols and most effective proxies.
+Check our [release notes](https://github.com/getlantern#release-notes) to see which version is newest, and always ensure you're updated to the latest version to access the latest protocols and most effective proxies.
+
+---
+
+![Alt text](picture.jpg)

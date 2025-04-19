@@ -5,6 +5,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"strings"
 
 	"github.com/getlantern/illuminated"
 	"github.com/spf13/cobra"
@@ -16,7 +17,7 @@ var prepareCmd = &cobra.Command{
 	Short:  "stage source files, parse them, and create templates and translation files",
 	PreRun: func(cmd *cobra.Command, args []string) { Init() },
 	Run: func(cmd *cobra.Command, args []string) {
-		// stage
+		// stage files from remote or outside dir to projectDir
 		err := illuminated.Stage(source, projectDir)
 		if err != nil {
 			slog.Error("unable to stage selected source", "error", err)
@@ -31,7 +32,7 @@ var prepareCmd = &cobra.Command{
 			os.Exit(1)
 		}
 		for _, file := range files {
-			if file.IsDir() {
+			if file.IsDir() || !strings.HasSuffix(file.Name(), ".md") {
 				slog.Debug("skipping dir (expects only files)", "name", file.Name())
 				continue
 			}
@@ -49,6 +50,6 @@ var prepareCmd = &cobra.Command{
 
 func init() {
 	rootCmd.AddCommand(prepareCmd)
-	prepareCmd.PersistentFlags().StringVarP(&source, "source", "s", "", "source document(s) location, can be: file, directory, or GitHub wiki URL")
+	prepareCmd.PersistentFlags().StringVarP(&source, "source", "s", "", "source document(s) location, can be: directory, or GitHub wiki URL")
 	prepareCmd.MarkPersistentFlagRequired("source")
 }

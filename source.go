@@ -8,16 +8,21 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"strings"
 
 	"github.com/go-git/go-git/v5"
 )
 
-var (
-	ErrSourceValidation = fmt.Errorf("source must be a valid file, directory, or GitHub wiki")
-)
+// WikiIgnore defines file names which should be ignored when staging a cloned remote Wiki.
+var WikiIgnore = []string{
+	".git",
+	"Home",
+	"_Sidebar",
+	"_Footer",
+}
 
 // Stage prepares the source files for processing by copying them to illuminated.DefaultDirNameStaging.
-// Accepted source includes: local file, directories, or remote GitHub wiki URLs.
+// Accepted source includes: local directory, or remote GitHub wiki URLs.
 func Stage(source string, projectDir string) error {
 	parsedURL, err := url.Parse(source)
 	if err == nil && parsedURL.Scheme != "" && parsedURL.Host != "" {
@@ -25,6 +30,25 @@ func Stage(source string, projectDir string) error {
 		err = cloneRepo(source, path.Join(projectDir, DefaultDirNameStaging))
 		if err != nil {
 			return fmt.Errorf("clone repo: %v", err)
+		}
+		// remove ignored files
+		dir, err := os.ReadDir(path.Join(projectDir, DefaultDirNameStaging))
+		if err != nil {
+			return fmt.Errorf("read staging dir: %v", err)
+		}
+		for _, entry := range dir {
+			if entry.IsDir() {
+				continue
+			}
+			for _, ignore := range WikiIgnore {
+				if strings.Contains(entry.Name(), ignore) {
+					slog.Debug("removing ignored file", "name", entry.Name())
+					err = os.Remove(path.Join(projectDir, DefaultDirNameStaging, entry.Name()))
+					if err != nil {
+						return fmt.Errorf("remove ignored file: %v", err)
+					}
+				}
+			}
 		}
 	} else {
 		slog.Debug("staging local source", "source", source)
@@ -34,7 +58,7 @@ func Stage(source string, projectDir string) error {
 		}
 		info, err := os.Stat(source)
 		if err != nil {
-			return fmt.Errorf("%w: %v", ErrSourceValidation, err)
+			return fmt.Errorf("invalid source: %v", err)
 		}
 		if info.IsDir() {
 			entries, err := os.ReadDir(source)
@@ -46,6 +70,7 @@ func Stage(source string, projectDir string) error {
 					slog.Debug("ignoring directory", "name", entry.Name())
 					continue
 				}
+				slog.Debug("copying file", "name", entry.Name())
 				err = copy(
 					filepath.Join(source, entry.Name()),
 					filepath.Join(projectDir, DefaultDirNameStaging, entry.Name()),
@@ -55,18 +80,10 @@ func Stage(source string, projectDir string) error {
 				}
 			}
 		} else {
-			err = copy(
-				source,
-				filepath.Join(projectDir, DefaultDirNameStaging, filepath.Base(source)),
-			)
-			if err != nil {
-				return fmt.Errorf("stage single file: %v", err)
-			}
+			return fmt.Errorf("source is not a directory: %v", source)
 		}
 	}
-	if err != nil {
-		return ErrSourceValidation
-	}
+	slog.Info("staging complete", "dir", path.Join(projectDir, DefaultDirNameStaging))
 	return nil
 }
 

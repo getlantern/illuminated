@@ -9,8 +9,9 @@ internationalization tool for GitHub wikis
 It should be possible for an update to an arbitrary markdown, like en/doc.md, to generate new, complete en.json source files and empty *.json translation files, in addition to generating the doc.md.tmpl which can regenerate the original en/doc.md or any other translation using itself any any *.json translation file. Then generate a pdf for each translation.
 
 ## usage
-To delete all example files and start over, run:
+To delete all example files and start over with newly built binary, run:
 ```sh
+$ make
 ```
 
 ## process
@@ -48,7 +49,7 @@ flowchart LR
 - [x] implement fallback to base language
 - [x] append multiple docs
 - [x] create mechanism for warning on uncurrent translations
-- [ ] support style
+- [ ] support style for pagebreaks
 - [ ] support pictures
 - [ ] handle footer
 - [ ] test E2E (including Pandoc calls) in CI
