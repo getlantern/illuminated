@@ -6,6 +6,6 @@ https://github.com/getlantern/engineering/issues/2106
 - [x] creating directories -- use 755 or 750 for permissions
 - [ ] default config move to cmd?
 - [ ] don't mutate data in place
-- [ ] detect lack of pandoc right away
+- [x] detect lack of pandoc right away
 - [ ] implement some basic translation connection
 

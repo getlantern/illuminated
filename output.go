@@ -48,8 +48,14 @@ func writeHTML(path string, doc *html.Node) error {
 
 // WritePDF calls pandoc to output a PDF from a source file (HTML expected).
 func WritePDF(sourcePath, outPath string, resourcePath string) error {
-	slog.Debug("calling pandoc to write write from HTML", "source", sourcePath, "out", outPath)
-	err := formatBreaks(sourcePath)
+	slog.Debug("calling pandoc to write from HTML", "source", sourcePath, "out", outPath)
+	// first verify that pandoc is installed
+	_, err := exec.LookPath("pandoc")
+	if err != nil {
+		return fmt.Errorf("pandoc not found in PATH, install and try again: %w", err)
+	}
+
+	err = formatBreaks(sourcePath)
 	if err != nil {
 		return fmt.Errorf("format breaks in HTML: %w", err)
 	}
@@ -65,11 +71,7 @@ func WritePDF(sourcePath, outPath string, resourcePath string) error {
 		"--metadata", fmt.Sprintf("title=%s", path.Base(title)),
 		"--metadata", fmt.Sprintf("date=%s", time.Now().Format("2006-01-02")),
 		"--toc",
-		// "--standalone",
-		// "--resource-path", resourcePath,
-		// "--pdf-engine", "weasyprint",
 		"--pdf-engine", "pdflatex",
-		// "--embed-resources",
 		sourcePath, "-o", outPath,
 	)
 
@@ -80,6 +82,8 @@ func WritePDF(sourcePath, outPath string, resourcePath string) error {
 	return nil
 }
 
+// formatBreaks adds a break before each <h1> tag in the HTML file.
+// TODO: format in a way that LaTeX respects as full page break.
 func formatBreaks(filepathHTML string) error {
 	htmlContent, err := os.ReadFile(filepathHTML)
 	if err != nil {
@@ -90,9 +94,12 @@ func formatBreaks(filepathHTML string) error {
 	modifiedHTML := strings.ReplaceAll(
 		string(htmlContent),
 		"<h1>",
-		"<br><h1>",
-		// FEATURE: add proper page break before each chapter
-		// none of these work, gah
+		"<br><h1>", // just use a break for now :(
+		// FIXME: add proper page break before each chapter.
+		// Investigate why I am unable to inject a page break into HTML
+		// that pancdoc will respect as a LaTeX page break.
+		//
+		// Graveyard of attempts:
 		// `<div style="display:block; clear:both; page-break-before:always;"></div><h1>`,
 		// `<p>\newpage</p><h1>`,
 		// `<div class="page-break"></div><h1>`,
