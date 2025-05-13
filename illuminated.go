@@ -36,7 +36,7 @@ func Process(input string, projectDir string) error {
 
 	// json
 	dirTranslations := path.Join(projectDir, DefaultDirNameTranslations)
-	err = os.MkdirAll(dirTranslations, os.ModePerm)
+	err = os.MkdirAll(dirTranslations, 0o750)
 	if err != nil {
 		return fmt.Errorf("create directory %q: %w", dirTranslations, err)
 	}
@@ -49,7 +49,7 @@ func Process(input string, projectDir string) error {
 
 	// template
 	dirTemplates := path.Join(projectDir, DefaultDirNameTemplates)
-	err = os.MkdirAll(dirTemplates, os.ModePerm)
+	err = os.MkdirAll(dirTemplates, 0o750)
 	if err != nil {
 		return fmt.Errorf("create directory %v: %w", dirTemplates, err)
 	}
@@ -183,7 +183,7 @@ func GenerateHTMLs(baseLang string, targetLang []string, projectDir string, stri
 
 		// generate HTML files
 		dirOut := path.Join(projectDir, DefaultDirNameOutput)
-		err = os.MkdirAll(dirOut, os.ModePerm)
+		err = os.MkdirAll(dirOut, 0o750)
 		if err != nil {
 			return fmt.Errorf("create output directory %v: %w", DefaultDirNameOutput, err)
 		}

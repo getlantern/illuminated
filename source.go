@@ -52,7 +52,7 @@ func Stage(source string, projectDir string) error {
 		}
 	} else {
 		slog.Debug("staging local source", "source", source)
-		err = os.MkdirAll(path.Join(projectDir, DefaultDirNameStaging), os.ModePerm)
+		err = os.MkdirAll(path.Join(projectDir, DefaultDirNameStaging), 0o750)
 		if err != nil {
 			return fmt.Errorf("create staging: %w", err)
 		}

@@ -37,7 +37,7 @@ func (c *Config) Write(dir string) error {
 		return fmt.Errorf("check config file %v: %w", DefaultConfigFilename, err)
 	}
 
-	err := os.MkdirAll(dir, os.ModePerm)
+	err := os.MkdirAll(dir, 0o750)
 	if err != nil {
 		return fmt.Errorf("create directory %v: %w", dir, err)
 	}
@@ -53,7 +53,7 @@ func (c *Config) Write(dir string) error {
 		return fmt.Errorf("marshal config: %w", err)
 	}
 
-	err = os.WriteFile(configPath, yamlData, os.ModePerm)
+	err = os.WriteFile(configPath, yamlData, 0o750)
 	if err != nil {
 		return fmt.Errorf("write config file %v: %w", DefaultConfigFilename, err)
 	}
