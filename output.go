@@ -83,7 +83,7 @@ func WritePDF(sourcePath, outPath string, resourcePath string) error {
 func formatBreaks(filepathHTML string) error {
 	htmlContent, err := os.ReadFile(filepathHTML)
 	if err != nil {
-		return fmt.Errorf("read HTML file: %v", err)
+		return fmt.Errorf("read HTML file: %w", err)
 	}
 
 	// Add a page break before every <h1> tag
@@ -102,9 +102,9 @@ func formatBreaks(filepathHTML string) error {
 	)
 
 	// Write the modified HTML back to the file
-	err = os.WriteFile(filepathHTML, []byte(modifiedHTML), 0644)
+	err = os.WriteFile(filepathHTML, []byte(modifiedHTML), 0o644)
 	if err != nil {
-		return fmt.Errorf("write modified HTML: %v", err)
+		return fmt.Errorf("write modified HTML: %w", err)
 	}
 
 	return nil
@@ -114,12 +114,12 @@ func JoinHTML(language string, projectDir string, name string) (string, error) {
 	outputDir := path.Join(projectDir, DefaultDirNameOutput)
 	files, err := os.ReadDir(outputDir)
 	if err != nil {
-		return "", fmt.Errorf("read output directory: %v", err)
+		return "", fmt.Errorf("read output directory: %w", err)
 	}
 	joinedFilePath := path.Join(outputDir, fmt.Sprintf("%s.html", name))
 	joinedFile, err := os.Create(joinedFilePath)
 	if err != nil {
-		return "", fmt.Errorf("create consolidated file: %v", err)
+		return "", fmt.Errorf("create consolidated file: %w", err)
 	}
 	defer joinedFile.Close()
 
@@ -139,7 +139,7 @@ func JoinHTML(language string, projectDir string, name string) (string, error) {
 		filePath := path.Join(outputDir, file.Name())
 		content, err := os.ReadFile(filePath)
 		if err != nil {
-			return "", fmt.Errorf("read file %v: %v", file.Name(), err)
+			return "", fmt.Errorf("read file %v: %w", file.Name(), err)
 		}
 
 		bodyStart := strings.Index(string(content), "<body>")
@@ -154,7 +154,7 @@ func JoinHTML(language string, projectDir string, name string) (string, error) {
 
 		err = os.Remove(filePath)
 		if err != nil {
-			return "", fmt.Errorf("delete file %v: %v", file.Name(), err)
+			return "", fmt.Errorf("delete file %v: %w", file.Name(), err)
 		}
 	}
 
@@ -163,7 +163,7 @@ func JoinHTML(language string, projectDir string, name string) (string, error) {
 	// Write the combined HTML to the output file
 	_, err = joinedFile.WriteString(combinedBody.String())
 	if err != nil {
-		return "", fmt.Errorf("write to consolidated file: %v", err)
+		return "", fmt.Errorf("write to consolidated file: %w", err)
 	}
 
 	return joinedFilePath, nil

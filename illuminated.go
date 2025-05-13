@@ -23,10 +23,10 @@ import (
 //   - <DirTranslations>/<file>.html.tmpl  (go template)
 func Process(input string, projectDir string) error {
 	var counter int
-	var translationStrings = make(map[string]string)
+	translationStrings := make(map[string]string)
 	doc, err := parseHTML(input)
 	if err != nil {
-		return fmt.Errorf("parse input: %v", err)
+		return fmt.Errorf("parse input: %w", err)
 	}
 	extractInnerHTML(doc, translationStrings, &counter)
 	for k, v := range translationStrings {
@@ -38,12 +38,12 @@ func Process(input string, projectDir string) error {
 	dirTranslations := path.Join(projectDir, DefaultDirNameTranslations)
 	err = os.MkdirAll(dirTranslations, os.ModePerm)
 	if err != nil {
-		return fmt.Errorf("create directory %q: %v", dirTranslations, err)
+		return fmt.Errorf("create directory %q: %w", dirTranslations, err)
 	}
 	jsonOut := path.Join(dirTranslations, fmt.Sprintf("%s.%s.json", DefaultConfig.Base, baseName))
 	err = writeJSON(jsonOut, translationStrings)
 	if err != nil {
-		return fmt.Errorf("write %v: %v", jsonOut, err)
+		return fmt.Errorf("write %v: %w", jsonOut, err)
 	}
 	slog.Debug("translation strings written", "file", jsonOut)
 
@@ -51,12 +51,12 @@ func Process(input string, projectDir string) error {
 	dirTemplates := path.Join(projectDir, DefaultDirNameTemplates)
 	err = os.MkdirAll(dirTemplates, os.ModePerm)
 	if err != nil {
-		return fmt.Errorf("create directory %v: %v", dirTemplates, err)
+		return fmt.Errorf("create directory %v: %w", dirTemplates, err)
 	}
 	tmplOut := path.Join(dirTemplates, fmt.Sprintf("%s.html.tmpl", baseName))
 	err = writeHTML(tmplOut, doc)
 	if err != nil {
-		return fmt.Errorf("write HTML template: %v", err)
+		return fmt.Errorf("write HTML template: %w", err)
 	}
 	slog.Debug("HTML template written", "file", tmplOut)
 
@@ -112,7 +112,7 @@ func GenerateHTMLs(baseLang string, targetLang []string, projectDir string, stri
 	baseTx := make(map[string]map[string]string)
 	dirTx, err := os.ReadDir(path.Join(projectDir, DefaultDirNameTranslations))
 	if err != nil {
-		return fmt.Errorf("read translations directory: %v", err)
+		return fmt.Errorf("read translations directory: %w", err)
 	}
 	for _, f := range dirTx {
 		if strings.HasPrefix(f.Name(), baseLang+".") {
@@ -125,11 +125,11 @@ func GenerateHTMLs(baseLang string, targetLang []string, projectDir string, stri
 			slog.Debug("extracting base language translations strings", "file", baseTxFile)
 			f, err := os.ReadFile(baseTxFile)
 			if err != nil {
-				return fmt.Errorf("read base translation file %v: %v", baseTxFile, err)
+				return fmt.Errorf("read base translation file %v: %w", baseTxFile, err)
 			}
 			err = json.Unmarshal(f, &fileTx)
 			if err != nil {
-				return fmt.Errorf("unmarshal base translation file %v: %v", baseTxFile, err)
+				return fmt.Errorf("unmarshal base translation file %v: %w", baseTxFile, err)
 			}
 			baseTx[baseLang] = fileTx
 		}
@@ -151,11 +151,11 @@ func GenerateHTMLs(baseLang string, targetLang []string, projectDir string, stri
 				slog.Debug("reading target translation file", "file", targetTxFile)
 				f, err := os.ReadFile(targetTxFile)
 				if err != nil {
-					return fmt.Errorf("read target translation file %v: %v", targetTxFile, err)
+					return fmt.Errorf("read target translation file %v: %w", targetTxFile, err)
 				}
 				err = json.Unmarshal(f, &fileTx)
 				if err != nil {
-					return fmt.Errorf("unmarshal target translation file %v: %v", targetTxFile, err)
+					return fmt.Errorf("unmarshal target translation file %v: %w", targetTxFile, err)
 				}
 				targetTx[file.Name()] = fileTx
 			}
@@ -185,13 +185,13 @@ func GenerateHTMLs(baseLang string, targetLang []string, projectDir string, stri
 		dirOut := path.Join(projectDir, DefaultDirNameOutput)
 		err = os.MkdirAll(dirOut, os.ModePerm)
 		if err != nil {
-			return fmt.Errorf("create output directory %v: %v", DefaultDirNameOutput, err)
+			return fmt.Errorf("create output directory %v: %w", DefaultDirNameOutput, err)
 		}
 		for _, file := range dirTx {
 			outFile := fmt.Sprintf("%s.%s.html", lang, strings.TrimPrefix(file.Name(), lang+"."))
 			fo, err := os.Create(path.Join(dirOut, outFile))
 			if err != nil {
-				return fmt.Errorf("create output file %v: %v", outFile, err)
+				return fmt.Errorf("create output file %v: %w", outFile, err)
 			}
 			defer fo.Close()
 			tmplFilename := strings.TrimPrefix(file.Name(), lang+".")
@@ -202,11 +202,11 @@ func GenerateHTMLs(baseLang string, targetLang []string, projectDir string, stri
 				tmplFilename,
 			))
 			if err != nil {
-				return fmt.Errorf("parse template %v: %v", tmplFilename, err)
+				return fmt.Errorf("parse template %v: %w", tmplFilename, err)
 			}
 			err = tmpl.Execute(fo, targetTx[file.Name()])
 			if err != nil {
-				return fmt.Errorf("execute template %v: %v", file.Name(), err)
+				return fmt.Errorf("execute template %v: %w", file.Name(), err)
 			}
 			slog.Info("generated HTML", "file", outFile)
 		}

@@ -34,28 +34,28 @@ func (c *Config) Write(dir string) error {
 	if _, err := os.Stat(filepath); err == nil {
 		slog.Warn("existing config exists and will be overwritten", "filepath", filepath)
 	} else if !os.IsNotExist(err) {
-		return fmt.Errorf("check config file %v: %v", DefaultConfigFilename, err)
+		return fmt.Errorf("check config file %v: %w", DefaultConfigFilename, err)
 	}
 
 	err := os.MkdirAll(dir, os.ModePerm)
 	if err != nil {
-		return fmt.Errorf("create directory %v: %v", dir, err)
+		return fmt.Errorf("create directory %v: %w", dir, err)
 	}
 	configPath := path.Join(dir, DefaultConfigFilename)
 	f, err := os.Create(configPath)
 	if err != nil {
-		return fmt.Errorf("create config file %v: %v", DefaultConfigFilename, err)
+		return fmt.Errorf("create config file %v: %w", DefaultConfigFilename, err)
 	}
 	defer f.Close()
 
 	yamlData, err := yaml.Marshal(c)
 	if err != nil {
-		return fmt.Errorf("marshal config: %v", err)
+		return fmt.Errorf("marshal config: %w", err)
 	}
 
 	err = os.WriteFile(configPath, yamlData, os.ModePerm)
 	if err != nil {
-		return fmt.Errorf("write config file %v: %v", DefaultConfigFilename, err)
+		return fmt.Errorf("write config file %v: %w", DefaultConfigFilename, err)
 	}
 	slog.Info("project directory created with config", "dir", dir, "config", configPath)
 	return nil
@@ -65,12 +65,12 @@ func (c *Config) Write(dir string) error {
 func (c *Config) Read(filepath string) error {
 	f, err := os.ReadFile(filepath)
 	if err != nil {
-		return fmt.Errorf("read config file %v: %v", filepath, err)
+		return fmt.Errorf("read config file %v: %w", filepath, err)
 	}
 
 	err = yaml.Unmarshal(f, &c)
 	if err != nil {
-		return fmt.Errorf("unmarshal config file %v: %v", filepath, err)
+		return fmt.Errorf("unmarshal config file %v: %w", filepath, err)
 	}
 
 	if c.Base == "" {

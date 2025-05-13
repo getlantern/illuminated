@@ -29,12 +29,12 @@ func Stage(source string, projectDir string) error {
 		slog.Debug("staging remote wiki", "URL", parsedURL)
 		err = cloneRepo(source, path.Join(projectDir, DefaultDirNameStaging))
 		if err != nil {
-			return fmt.Errorf("clone repo: %v", err)
+			return fmt.Errorf("clone repo: %w", err)
 		}
 		// remove ignored files
 		dir, err := os.ReadDir(path.Join(projectDir, DefaultDirNameStaging))
 		if err != nil {
-			return fmt.Errorf("read staging dir: %v", err)
+			return fmt.Errorf("read staging dir: %w", err)
 		}
 		for _, entry := range dir {
 			if entry.IsDir() {
@@ -45,7 +45,7 @@ func Stage(source string, projectDir string) error {
 					slog.Debug("removing ignored file", "name", entry.Name())
 					err = os.Remove(path.Join(projectDir, DefaultDirNameStaging, entry.Name()))
 					if err != nil {
-						return fmt.Errorf("remove ignored file: %v", err)
+						return fmt.Errorf("remove ignored file: %w", err)
 					}
 				}
 			}
@@ -54,16 +54,16 @@ func Stage(source string, projectDir string) error {
 		slog.Debug("staging local source", "source", source)
 		err = os.MkdirAll(path.Join(projectDir, DefaultDirNameStaging), os.ModePerm)
 		if err != nil {
-			return fmt.Errorf("create staging: %v", err)
+			return fmt.Errorf("create staging: %w", err)
 		}
 		info, err := os.Stat(source)
 		if err != nil {
-			return fmt.Errorf("invalid source: %v", err)
+			return fmt.Errorf("invalid source: %w", err)
 		}
 		if info.IsDir() {
 			entries, err := os.ReadDir(source)
 			if err != nil {
-				return fmt.Errorf("read dir: %v", err)
+				return fmt.Errorf("read dir: %w", err)
 			}
 			for _, entry := range entries {
 				if entry.IsDir() {
@@ -76,7 +76,7 @@ func Stage(source string, projectDir string) error {
 					filepath.Join(projectDir, DefaultDirNameStaging, entry.Name()),
 				)
 				if err != nil {
-					return fmt.Errorf("stage file %q from dir: %v", entry.Name(), err)
+					return fmt.Errorf("stage file %q from dir: %w", entry.Name(), err)
 				}
 			}
 		} else {
@@ -91,19 +91,19 @@ func Stage(source string, projectDir string) error {
 func copy(src, dst string) error {
 	srcFile, err := os.Open(src)
 	if err != nil {
-		return fmt.Errorf("open file: %v", err)
+		return fmt.Errorf("open file: %w", err)
 	}
 	defer srcFile.Close()
 
 	dstFile, err := os.Create(dst)
 	if err != nil {
-		return fmt.Errorf("create file: %v", err)
+		return fmt.Errorf("create file: %w", err)
 	}
 	defer dstFile.Close()
 
 	_, err = io.Copy(dstFile, srcFile)
 	if err != nil {
-		return fmt.Errorf("copy file: %v", err)
+		return fmt.Errorf("copy file: %w", err)
 	}
 	return nil
 }
@@ -114,7 +114,7 @@ func cloneRepo(url, path string) error {
 		slog.Warn("repo already exists, replacing", "path", path)
 		err = os.RemoveAll(path)
 		if err != nil {
-			return fmt.Errorf("failed to remove existing directory: %v", err)
+			return fmt.Errorf("failed to remove existing directory: %w", err)
 		}
 	}
 
@@ -124,7 +124,7 @@ func cloneRepo(url, path string) error {
 		Depth:    1,
 	})
 	if err != nil {
-		return fmt.Errorf("failed to clone repository: %v", err)
+		return fmt.Errorf("failed to clone repository: %w", err)
 	}
 	return nil
 }
