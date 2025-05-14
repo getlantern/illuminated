@@ -35,21 +35,23 @@ flowchart LR
 
 | step | purpose
 | --- | --- |
-| parse | English markdown is converted to HTML. |
-| extract | Inner HTML strings are extracted to `en.json`. |
-| template | Go template is generated from English markdown, corresponding to `en.json`. |
+| parse | Markdown in base language is converted to HTML. |
+| extract | Inner HTML strings are extracted to `en.json` (or `<baseLang>.json`). |
+| template | Go template generated from base language markdown to pair with `.json` content strings. |
 | translate | Translation files are generated. |
 | generate | Templates and translation files are combined to generate translated markdown copies. |
 | publish | Translated files are combined into single PDF per language. |
 
-## MVP TODO
+## Future Work
 - [x] read from ~dir~ or ~wiki source~
 - [x] write unit tests
 - [x] generate TOC
 - [x] implement fallback to base language
 - [x] append multiple docs
 - [x] create mechanism for warning on uncurrent translations
+- [x] support pictures
+- [x] test E2E (including Pandoc calls) in CI
 - [ ] support style for pagebreaks
-- [ ] support pictures
 - [ ] handle footer
-- [ ] test E2E (including Pandoc calls) in CI
+- [ ] don't mutate data in place
+- [ ] default config move to cmd?
