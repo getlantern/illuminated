@@ -13,7 +13,7 @@ var (
 	DefaultConfigFilename = ".illuminatedrc"
 	DefaultConfig         = Config{
 		Base:    "en",
-		Targets: []string{"en"}, // TODO use different ASAP
+		Targets: []string{"en", "fa"},
 	}
 	DefaultDirNameStaging      = "staging"      // copies of source and intermediate files
 	DefaultDirNameTranslations = "translations" // translation files for internationalization
