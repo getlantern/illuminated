@@ -8,11 +8,11 @@ build:
 testlocal:
 	./illuminated cleanup --force
 	./illuminated init
-	./illuminated prepare --source example
+	./illuminated update --source example
 	./illuminated generate --join --pdf
 
 testremote:
 	./illuminated cleanup --force
 	./illuminated init
-	./illuminated prepare --source https://github.com/getlantern/guide.wiki.git
+	./illuminated update --source https://github.com/getlantern/guide.wiki.git
 	./illuminated generate --join --pdf

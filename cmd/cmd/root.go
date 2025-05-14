@@ -15,7 +15,7 @@ var (
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
-	Short: "prepare templates and translations files from markdown, then generate translated PDF files",
+	Short: "update templates and translations files from markdown, then generate translated PDF files",
 }
 
 func Execute() {

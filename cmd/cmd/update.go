@@ -11,9 +11,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// prepareCmd represents the prepare command
-var prepareCmd = &cobra.Command{
-	Use:    "prepare",
+// updateCmd fetches new source material and updates the project directory with
+// new translation .json files and HTML templates.
+var updateCmd = &cobra.Command{
+	Use:    "update",
 	Short:  "stage source files, parse them, and create templates and translation files",
 	PreRun: func(cmd *cobra.Command, args []string) { Init() },
 	Run: func(cmd *cobra.Command, args []string) {
@@ -49,7 +50,7 @@ var prepareCmd = &cobra.Command{
 }
 
 func init() {
-	rootCmd.AddCommand(prepareCmd)
-	prepareCmd.PersistentFlags().StringVarP(&source, "source", "s", "", "source document(s) location, can be: directory, or GitHub wiki URL")
-	prepareCmd.MarkPersistentFlagRequired("source")
+	rootCmd.AddCommand(updateCmd)
+	updateCmd.PersistentFlags().StringVarP(&source, "source", "s", "", "source document(s) location, can be: directory, or GitHub wiki URL")
+	updateCmd.MarkPersistentFlagRequired("source")
 }

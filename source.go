@@ -21,8 +21,11 @@ var WikiIgnore = []string{
 	"_Footer",
 }
 
-// Stage prepares the source files for processing by copying them to illuminated.DefaultDirNameStaging.
-// Accepted source includes: local directory, or remote GitHub wiki URLs.
+// Stage fetches new source files for processing,
+// copying them to illuminated.DefaultDirNameStaging.
+// Accepted sources include:
+//   - local directory path
+//   - GitHub wiki URL
 func Stage(source string, projectDir string) error {
 	parsedURL, err := url.Parse(source)
 	if err == nil && parsedURL.Scheme != "" && parsedURL.Host != "" {

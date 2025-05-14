@@ -26,7 +26,7 @@ var (
 // generateCmd represents the generate command
 var generateCmd = &cobra.Command{
 	Use:    "generate",
-	Short:  "generate published files from prepared templates and translations",
+	Short:  "generate published files from updated templates and translations",
 	PreRun: func(cmd *cobra.Command, args []string) { Init() },
 	RunE: func(cmd *cobra.Command, args []string) error {
 		// load and validate config

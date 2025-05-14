@@ -17,7 +17,7 @@ $ make
 ## process
 ```mermaid
 flowchart LR
-  subgraph prepare
+  subgraph update
     en/doc.md --> |parse| doc.html 
     doc.html --> |extract| en.json
     doc.html --> |template| doc.md.tmpl 
