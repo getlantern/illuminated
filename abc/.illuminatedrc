@@ -1,0 +1,4 @@
+base: en
+targets:
+    - en
+    - fa

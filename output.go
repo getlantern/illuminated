@@ -139,7 +139,7 @@ func JoinHTML(language string, projectDir string, name string) (string, error) {
 			continue
 		}
 		if !strings.HasPrefix(file.Name(), language+".") || !strings.HasSuffix(file.Name(), ".html") {
-			slog.Debug("skipping file", "name", file.Name())
+			slog.Debug("skipping file for language or type mismatch", "name", file.Name(), "lang", language)
 			continue
 		}
 

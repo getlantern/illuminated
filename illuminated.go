@@ -18,6 +18,8 @@ import (
 	"golang.org/x/net/html"
 )
 
+const DefaultFilePermissions = 0o750
+
 // Process an input markdown file into parts:
 //   - <DirTranslations>/<lang>.json       (translation strings)
 //   - <DirTranslations>/<file>.html.tmpl  (go template)
@@ -36,7 +38,7 @@ func Process(input string, projectDir string) error {
 
 	// json
 	dirTranslations := path.Join(projectDir, DefaultDirNameTranslations)
-	err = os.MkdirAll(dirTranslations, 0o750)
+	err = os.MkdirAll(dirTranslations, DefaultFilePermissions)
 	if err != nil {
 		return fmt.Errorf("create directory %q: %w", dirTranslations, err)
 	}
@@ -49,7 +51,7 @@ func Process(input string, projectDir string) error {
 
 	// template
 	dirTemplates := path.Join(projectDir, DefaultDirNameTemplates)
-	err = os.MkdirAll(dirTemplates, 0o750)
+	err = os.MkdirAll(dirTemplates, DefaultFilePermissions)
 	if err != nil {
 		return fmt.Errorf("create directory %v: %w", dirTemplates, err)
 	}
@@ -79,7 +81,7 @@ func extractInnerHTML(n *html.Node, text map[string]string, counter *int) {
 	}
 }
 
-// parseHTML converts markdown file to HTML object
+// parseHTML converts markdown file into an HTML object.
 func parseHTML(inputPath string) (*html.Node, error) {
 	f, err := os.ReadFile(path.Join(inputPath))
 	if err != nil {
@@ -114,6 +116,8 @@ func GenerateHTMLs(baseLang string, targetLang []string, projectDir string, stri
 	if err != nil {
 		return fmt.Errorf("read translations directory: %w", err)
 	}
+
+	// add the base language translation strings to the baseTx map
 	for _, f := range dirTx {
 		if strings.HasPrefix(f.Name(), baseLang+".") {
 			fileTx := make(map[string]string)
@@ -135,7 +139,7 @@ func GenerateHTMLs(baseLang string, targetLang []string, projectDir string, stri
 		}
 	}
 
-	// generate translated HTMLs
+	// generate translated HTMLs for every target language
 	for _, lang := range targetLang {
 		// populate target translation map
 		// lang.file.key
@@ -160,10 +164,12 @@ func GenerateHTMLs(baseLang string, targetLang []string, projectDir string, stri
 				targetTx[file.Name()] = fileTx
 			}
 		}
-
+		// FIXME: --join only works for one language :(
 		// validate and/or substitute depending on strict mode
+		// FIXME: this isn't working right
 		for filename, file := range targetTx {
 			for k, v := range file {
+				// slog.Debug("TODO temp", "key", k, "value", v, "filename", filename, "file", file)
 				if v == "" {
 					if strict {
 						return fmt.Errorf("missing translation %q in %q", k, file)
@@ -183,30 +189,37 @@ func GenerateHTMLs(baseLang string, targetLang []string, projectDir string, stri
 
 		// generate HTML files
 		dirOut := path.Join(projectDir, DefaultDirNameOutput)
-		err = os.MkdirAll(dirOut, 0o750)
+		err = os.MkdirAll(dirOut, DefaultFilePermissions)
 		if err != nil {
 			return fmt.Errorf("create output directory %v: %w", DefaultDirNameOutput, err)
 		}
-		for _, file := range dirTx {
-			outFile := fmt.Sprintf("%s.%s.html", lang, strings.TrimPrefix(file.Name(), lang+"."))
-			fo, err := os.Create(path.Join(dirOut, outFile))
+		for _, tx := range dirTx {
+			outFile := fmt.Sprintf("%s.%s.html",
+				lang, strings.TrimPrefix(strings.TrimSuffix(tx.Name(), ".json"), baseLang+"."),
+			)
+			outPath := path.Join(dirOut, outFile)
+			fo, err := os.Create(outPath)
 			if err != nil {
 				return fmt.Errorf("create output file %v: %w", outFile, err)
 			}
 			defer fo.Close()
-			tmplFilename := strings.TrimPrefix(file.Name(), lang+".")
+			tmplFilename := strings.TrimPrefix(tx.Name(), baseLang+".")
 			tmplFilename = strings.TrimSuffix(tmplFilename, path.Ext(tmplFilename)) + ".html.tmpl"
 			tmpl, err := template.ParseFiles(path.Join(
 				projectDir,
 				DefaultDirNameTemplates,
 				tmplFilename,
 			))
+			slog.Debug("generating HTML from template",
+				"template", tmplFilename,
+				"translation", tx.Name(),
+			)
 			if err != nil {
 				return fmt.Errorf("parse template %v: %w", tmplFilename, err)
 			}
-			err = tmpl.Execute(fo, targetTx[file.Name()])
+			err = tmpl.Execute(fo, targetTx[tx.Name()])
 			if err != nil {
-				return fmt.Errorf("execute template %v: %w", file.Name(), err)
+				return fmt.Errorf("execute template %v: %w", tx.Name(), err)
 			}
 			slog.Info("generated HTML", "file", outFile)
 		}

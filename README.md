@@ -11,7 +11,7 @@ It should be possible for an update to an arbitrary markdown, like en/doc.md, to
 ## usage
 To delete all example files and start over with newly built binary, run:
 ```sh
-$ make
+$ make build testlocal
 ```
 
 ## process
@@ -22,7 +22,7 @@ flowchart LR
     doc.html --> |extract| en.json
     doc.html --> |template| doc.md.tmpl 
   end
-  subgraph translation
+  subgraph translate
     *.json
   end
   subgraph generate
@@ -40,7 +40,7 @@ flowchart LR
 | template | Go template generated from base language markdown to pair with `.json` content strings. |
 | translate | Translation files are generated. |
 | generate | Templates and translation files are combined to generate translated markdown copies. |
-| publish | Translated files are combined into single PDF per language. |
+| pandoc | Pandoc adds (or replaces) a rendered PDF for every language. |
 
 ## Future Work
 - [x] read from ~dir~ or ~wiki source~
