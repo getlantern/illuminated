@@ -1,4 +1,4 @@
-// package illuminated converts markdown into corresponding templates and translations,
+// package converts markdown into corresponding templates and translations,
 // optionally also generating rendered, translated final outputs from completed translations.
 //
 // Translation is outside the scope of this package.
@@ -21,33 +21,68 @@ import (
 const DefaultFilePermissions = 0o750
 
 // Process an input markdown file into parts:
-//   - <DirTranslations>/<lang>.json       (translation strings)
+//   - <DirTranslations>/<lang>.json       (translation strings for base and target languages)
 //   - <DirTranslations>/<file>.html.tmpl  (go template)
 func Process(input string, projectDir string) error {
 	var counter int
-	translationStrings := make(map[string]string)
+	baseLangStrings := make(map[string]string)
 	doc, err := parseHTML(input)
 	if err != nil {
 		return fmt.Errorf("parse input: %w", err)
 	}
-	extractInnerHTML(doc, translationStrings, &counter)
-	for k, v := range translationStrings {
+	extractInnerHTML(doc, baseLangStrings, &counter)
+	for k, v := range baseLangStrings {
 		slog.Debug("extracted", "key", k, "value", v, "file", input)
 	}
-	baseName := strings.TrimSuffix(path.Base(input), path.Ext(input))
+	docBaseName := strings.TrimSuffix(path.Base(input), path.Ext(input))
 
-	// json
+	// load and validate config
+	var config Config
+	err = config.Read(path.Join(projectDir, DefaultConfigFilename))
+	if err != nil {
+		slog.Error("read config", "error", err)
+		os.Exit(1)
+	}
+	slog.Debug("config read", "config", config)
+
+	// make json (base language)
 	dirTranslations := path.Join(projectDir, DefaultDirNameTranslations)
 	err = os.MkdirAll(dirTranslations, DefaultFilePermissions)
 	if err != nil {
 		return fmt.Errorf("create directory %q: %w", dirTranslations, err)
 	}
-	jsonOut := path.Join(dirTranslations, fmt.Sprintf("%s.%s.json", DefaultConfig.Base, baseName))
-	err = writeJSON(jsonOut, translationStrings)
+	jsonOut := path.Join(dirTranslations, fmt.Sprintf("%s.%s.json", config.Base, docBaseName))
+	err = writeJSON(jsonOut, baseLangStrings)
 	if err != nil {
 		return fmt.Errorf("write %v: %w", jsonOut, err)
 	}
-	slog.Debug("translation strings written", "file", jsonOut)
+	slog.Debug("translation strings written for base language", "file", jsonOut)
+
+	// empty base language strings for other languages
+	emptyStrings := make(map[string]string)
+	for k := range baseLangStrings {
+		emptyStrings[k] = ""
+	}
+
+	// make json (target languages)
+	for _, lang := range config.Targets {
+		jsonOut := path.Join(dirTranslations, fmt.Sprintf("%s.%s.json", lang, docBaseName))
+		var data map[string]string
+		if lang == config.Base {
+			data = baseLangStrings
+		} else {
+			data = emptyStrings
+		}
+		slog.Warn("TODO", "data", data)
+		err = writeJSON(jsonOut, data)
+		if err != nil {
+			return fmt.Errorf("write %v: %w", jsonOut, err)
+		}
+		slog.Debug("translation strings written for target language",
+			"file", jsonOut,
+			"lang", lang,
+		)
+	}
 
 	// template
 	dirTemplates := path.Join(projectDir, DefaultDirNameTemplates)
@@ -55,7 +90,7 @@ func Process(input string, projectDir string) error {
 	if err != nil {
 		return fmt.Errorf("create directory %v: %w", dirTemplates, err)
 	}
-	tmplOut := path.Join(dirTemplates, fmt.Sprintf("%s.html.tmpl", baseName))
+	tmplOut := path.Join(dirTemplates, fmt.Sprintf("%s.html.tmpl", docBaseName))
 	err = writeHTML(tmplOut, doc)
 	if err != nil {
 		return fmt.Errorf("write HTML template: %w", err)
@@ -165,6 +200,7 @@ func GenerateHTMLs(baseLang string, targetLang []string, projectDir string, stri
 			}
 		}
 		// FIXME: --join only works for one language :(
+		// FIXME: we're not making fa.<file>.json translations?
 		// validate and/or substitute depending on strict mode
 		// FIXME: this isn't working right
 		for filename, file := range targetTx {
