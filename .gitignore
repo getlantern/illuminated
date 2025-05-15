@@ -1,5 +1,8 @@
 # ignore default project name as may be created during testing or use
 illuminated-project/
+abc/
 
 # ignore built binary
 illuminated
+
+.swp
