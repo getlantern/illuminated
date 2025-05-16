@@ -235,7 +235,6 @@ func GenerateHTMLs(baseLang string, targetLang []string, projectDir string, stri
 			if err != nil {
 				return fmt.Errorf("create output file %v: %w", outFile, err)
 			}
-			defer fo.Close()
 			tmplFilename := strings.TrimPrefix(tx.Name(), lang+".")
 			tmplFilename = strings.TrimSuffix(tmplFilename, path.Ext(tmplFilename)) + ".html.tmpl"
 			tmpl, err := template.ParseFiles(path.Join(
@@ -254,6 +253,7 @@ func GenerateHTMLs(baseLang string, targetLang []string, projectDir string, stri
 			if err != nil {
 				return fmt.Errorf("execute template %v: %w", tx.Name(), err)
 			}
+			fo.Close()
 			slog.Info("generated HTML", "file", outFile)
 		}
 	}
