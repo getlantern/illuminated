@@ -24,7 +24,7 @@ $ go build -o illuminated
 $ ./illuminated init --directory docs --base en --target en,zh,fa 
 ```
 
-Stage the the source documentation (either a local filepath or a wiki URL).
+Stage the source documentation (either a local filepath or a wiki URL).
 ```sh
 $ ./illuminated update --source $WIKI_URL -d docs
 ```
