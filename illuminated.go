@@ -13,7 +13,6 @@ import (
 	"os"
 	"path"
 	"strings"
-	"time"
 
 	"github.com/russross/blackfriday/v2"
 	"golang.org/x/net/html"
