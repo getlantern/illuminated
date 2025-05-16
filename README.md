@@ -9,11 +9,30 @@ internationalization tool for GitHub wikis
 It should be possible for an update to an arbitrary markdown, like en/doc.md, to generate new, complete en.json source files and empty *.json translation files, in addition to generating the doc.md.tmpl which can regenerate the original en/doc.md or any other translation using itself any any *.json translation file. Then generate a pdf for each translation.
 
 ## usage
+
+### development
 To delete all example files and start over with newly built binary, run:
 ```sh
-$ make build testlocal
+$ make local
 ```
 
+### production
+
+Build binary and initialize with languages and project directory.
+```sh
+$ go build -o illuminated
+$ ./illuminated init --directory docs --base en --target en,zh,fa 
+```
+
+Stage the the source documentation (either a local filepath or a wiki URL).
+```sh
+$ ./illuminated update --source $WIKI_URL -d docs
+```
+
+After translation, generate html and/or pdf, optionally joined. Strict will fail on any missing translations, otherwise, any missing strings will fallback to the base language specified at initialization.
+```sh
+$ ./illuminated generate -d docs --html --pdf --join --strict
+```
 ## process
 ```mermaid
 flowchart LR
