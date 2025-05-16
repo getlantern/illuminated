@@ -117,6 +117,7 @@ func formatBreaks(filepathHTML string) error {
 	return nil
 }
 
+// FIXME: join HTML only allows one language
 func JoinHTML(language string, projectDir string, name string) (string, error) {
 	outputDir := path.Join(projectDir, DefaultDirNameOutput)
 	files, err := os.ReadDir(outputDir)

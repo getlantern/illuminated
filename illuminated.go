@@ -13,12 +13,11 @@ import (
 	"os"
 	"path"
 	"strings"
+	"time"
 
 	"github.com/russross/blackfriday/v2"
 	"golang.org/x/net/html"
 )
-
-const DefaultFilePermissions = 0o750
 
 // Process an input markdown file into parts:
 //   - <DirTranslations>/<lang>.json       (translation strings for base and target languages)
@@ -199,47 +198,49 @@ func GenerateHTMLs(baseLang string, targetLang []string, projectDir string, stri
 				targetTx[file.Name()] = fileTx
 			}
 		}
-		// FIXME: --join only works for one language :(
-		// FIXME: we're not making fa.<file>.json translations?
-		// validate and/or substitute depending on strict mode
-		// FIXME: this isn't working right
+		// validate and/or substitute (depending on strict mode)
 		for filename, file := range targetTx {
 			for k, v := range file {
-				// slog.Debug("TODO temp", "key", k, "value", v, "filename", filename, "file", file)
-				if v == "" {
+				// slog.Warn("TODO temp", "key", k, "value", v, "filename", filename, "file", file)
+				if strings.TrimSpace(v) == "" {
 					if strict {
-						return fmt.Errorf("missing translation %q in %q", k, file)
+						return fmt.Errorf("missing translation %q in %q", k, filename)
 					} else {
 						slog.Warn("missing translation, substituting base lang string",
 							"key", k,
-							"file", file,
+							"file", filename,
 							"baseLang", baseLang,
 							"targetLang", lang,
 							"baseTx", baseTx[baseLang][k],
 						)
 					}
-					targetTx[filename][k] = baseTx[filename][k]
+					targetTx[filename][k] = baseTx[baseLang][k]
 				}
 			}
 		}
 
-		// generate HTML files
+		// generate HTML file for every existing translation
 		dirOut := path.Join(projectDir, DefaultDirNameOutput)
 		err = os.MkdirAll(dirOut, DefaultFilePermissions)
 		if err != nil {
 			return fmt.Errorf("create output directory %v: %w", DefaultDirNameOutput, err)
 		}
+		// TODO: throw an error if there is a template but not translation or vice versa.
 		for _, tx := range dirTx {
+			if !strings.HasPrefix(tx.Name(), lang+".") {
+				continue // skip non-matching languages
+			}
 			outFile := fmt.Sprintf("%s.%s.html",
-				lang, strings.TrimPrefix(strings.TrimSuffix(tx.Name(), ".json"), baseLang+"."),
+				lang, strings.TrimPrefix(strings.TrimSuffix(tx.Name(), ".json"), lang+"."),
 			)
+			time.Sleep(1 * time.Second)
 			outPath := path.Join(dirOut, outFile)
 			fo, err := os.Create(outPath)
 			if err != nil {
 				return fmt.Errorf("create output file %v: %w", outFile, err)
 			}
 			defer fo.Close()
-			tmplFilename := strings.TrimPrefix(tx.Name(), baseLang+".")
+			tmplFilename := strings.TrimPrefix(tx.Name(), lang+".")
 			tmplFilename = strings.TrimSuffix(tmplFilename, path.Ext(tmplFilename)) + ".html.tmpl"
 			tmpl, err := template.ParseFiles(path.Join(
 				projectDir,

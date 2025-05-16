@@ -19,6 +19,7 @@ var (
 	DefaultDirNameTranslations = "translations" // translation files for internationalization
 	DefaultDirNameTemplates    = "templates"    // template to recreate localized copies
 	DefaultDirNameOutput       = "output"       // final output (typically PDF)
+	DefaultFilePermissions     = os.FileMode(0o750)
 )
 
 // Config defines the base language from which all translations will be derived,
