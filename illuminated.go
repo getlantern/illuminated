@@ -231,7 +231,6 @@ func GenerateHTMLs(baseLang string, targetLang []string, projectDir string, stri
 			outFile := fmt.Sprintf("%s.%s.html",
 				lang, strings.TrimPrefix(strings.TrimSuffix(tx.Name(), ".json"), lang+"."),
 			)
-			time.Sleep(1 * time.Second)
 			outPath := path.Join(dirOut, outFile)
 			fo, err := os.Create(outPath)
 			if err != nil {
