@@ -1,18 +1,33 @@
-.PHONY: all build run
+SRC := $(shell find cmd -type f -name '*.go')
+BINARY := illuminated
 
-all: build
+# Default target
+all: $(BINARY)
 
-build:
-	cd cmd && go build -o ../illuminated
+# Build the binary if source files change
+$(BINARY): $(SRC)
+	cd cmd && go build -o ../$(BINARY)
+	
+# Rebuild only
+rebuild: $(BINARY)
+	./$(BINARY) --help
 
-testlocal:
-	./illuminated cleanup --force
-	./illuminated init
-	./illuminated prepare --source example
-	./illuminated generate --join --pdf
+# Test local files 
+local: $(BINARY)
+	./$(BINARY) cleanup --force --verbose
+	./$(BINARY) init --verbose
+	./$(BINARY) update --source example --verbose
+	./$(BINARY) generate --pdf --join --verbose
 
-testremote:
-	./illuminated cleanup --force
-	./illuminated init
-	./illuminated prepare --source https://github.com/getlantern/guide.wiki.git
-	./illuminated generate --join --pdf
+# Test remote files from a wiki URL
+remote: $(BINARY)
+	./$(BINARY) cleanup --force --verbose
+	./$(BINARY) init --verbose
+	./$(BINARY) update --source https://github.com/getlantern/guide.wiki.git --verbose
+	./$(BINARY) generate --pdf --join --verbose
+	
+# Clean up the binary
+cleanup:
+	./$(BINARY) cleanup --force --verbose
+	rm -f $(BINARY)
+
