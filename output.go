@@ -77,13 +77,15 @@ func WritePDF(sourcePath, outPath string, resourcePath string) error {
 
 	err = cmd.Run()
 	if err != nil {
-		return fmt.Errorf("execute pandoc command: %w", err)
+		if strings.Contains(err.Error(), "47") {
+			return fmt.Errorf("pandoc: pdf engine not found or invalid: %w", err)
+		}
+		return fmt.Errorf("pandoc: %w", err)
 	}
 	return nil
 }
 
 // formatBreaks adds a break before each <h1> tag in the HTML file.
-// TODO: format in a way that LaTeX respects as full page break.
 func formatBreaks(filepathHTML string) error {
 	htmlContent, err := os.ReadFile(filepathHTML)
 	if err != nil {
@@ -95,7 +97,8 @@ func formatBreaks(filepathHTML string) error {
 		string(htmlContent),
 		"<h1>",
 		"<br><h1>", // just use a break for now :(
-		// FIXME: add proper page break before each chapter.
+		// TODO: format in a way that LaTeX respects as full page break.
+		// add proper page break before each chapter.
 		// Investigate why I am unable to inject a page break into HTML
 		// that pancdoc will respect as a LaTeX page break.
 		//
@@ -117,14 +120,15 @@ func formatBreaks(filepathHTML string) error {
 	return nil
 }
 
-// FIXME: join HTML only allows one language
+// JoinHTML combines all HTML files for a given language (denoted by prefix)
+// into a single HTML file. This may be an intermediary step before PDF generation.
 func JoinHTML(language string, projectDir string, name string) (string, error) {
 	outputDir := path.Join(projectDir, DefaultDirNameOutput)
 	files, err := os.ReadDir(outputDir)
 	if err != nil {
 		return "", fmt.Errorf("read output directory: %w", err)
 	}
-	joinedFilePath := path.Join(outputDir, fmt.Sprintf("%s.html", name))
+	joinedFilePath := path.Join(outputDir, fmt.Sprintf("%s.%s.html", language, name))
 	joinedFile, err := os.Create(joinedFilePath)
 	if err != nil {
 		return "", fmt.Errorf("create consolidated file: %w", err)
@@ -139,8 +143,15 @@ func JoinHTML(language string, projectDir string, name string) (string, error) {
 			slog.Warn("skipping unexpected directory in output dir", "name", file.Name())
 			continue
 		}
-		if !strings.HasPrefix(file.Name(), language+".") || !strings.HasSuffix(file.Name(), ".html") {
-			slog.Debug("skipping file for language or type mismatch", "name", file.Name(), "lang", language)
+		if !strings.HasPrefix(file.Name(), language+".") {
+			slog.Debug("skipping on language mismatch",
+				"name", file.Name(),
+				"lang", language,
+			)
+			continue
+		}
+		if !strings.HasSuffix(file.Name(), ".html") {
+			slog.Debug("skipping non-HTML file", "name", file.Name())
 			continue
 		}
 

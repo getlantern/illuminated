@@ -72,7 +72,6 @@ func Process(input string, projectDir string) error {
 		} else {
 			data = emptyStrings
 		}
-		slog.Warn("TODO", "data", data)
 		err = writeJSON(jsonOut, data)
 		if err != nil {
 			return fmt.Errorf("write %v: %w", jsonOut, err)
@@ -201,7 +200,6 @@ func GenerateHTMLs(baseLang string, targetLang []string, projectDir string, stri
 		// validate and/or substitute (depending on strict mode)
 		for filename, file := range targetTx {
 			for k, v := range file {
-				// slog.Warn("TODO temp", "key", k, "value", v, "filename", filename, "file", file)
 				if strings.TrimSpace(v) == "" {
 					if strict {
 						return fmt.Errorf("missing translation %q in %q", k, filename)

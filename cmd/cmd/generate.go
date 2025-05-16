@@ -68,18 +68,35 @@ var generateCmd = &cobra.Command{
 			return nil
 		}
 
-		err = illuminated.WritePDF(
-			path.Join(joinedFilePath),
-			path.Join(projectDir, illuminated.DefaultDirNameOutput, name+".pdf"),
-			path.Join(projectDir, illuminated.DefaultDirNameStaging),
-		)
-		if err != nil {
-			return fmt.Errorf("write PDF: %v", err)
-		}
-		if !html {
-			err = os.Remove(joinedFilePath)
+		for _, lang := range config.Targets {
+			err = illuminated.WritePDF(
+				path.Join(joinedFilePath),
+				path.Join(
+					projectDir,
+					illuminated.DefaultDirNameOutput,
+					fmt.Sprintf("%s.%s.%s", lang, name, "pdf"),
+				),
+				path.Join(projectDir, illuminated.DefaultDirNameStaging),
+			)
 			if err != nil {
-				return fmt.Errorf("remove joined HTML after PDF creation: %v", err)
+				return fmt.Errorf("write PDF: %v", err)
+			}
+		}
+		outputDir := path.Join(projectDir, illuminated.DefaultDirNameOutput)
+		if !html {
+			files, err := os.ReadDir(outputDir)
+			if err != nil {
+				return fmt.Errorf("read output directory: %v", err)
+			}
+			for _, file := range files {
+				isHTML := (path.Ext(file.Name()) == ".html")
+				if !file.IsDir() && isHTML {
+					err = os.Remove(path.Join(outputDir, file.Name()))
+					if err != nil {
+						return fmt.Errorf("remove HTML file: %v", err)
+					}
+					slog.Debug("removed HTML file", "file", file.Name())
+				}
 			}
 		}
 		return nil
