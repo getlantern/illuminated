@@ -78,7 +78,10 @@ func WritePDF(sourcePath, outPath string, resourcePath string) error {
 	err = cmd.Run()
 	if err != nil {
 		if strings.Contains(err.Error(), "47") {
-			return fmt.Errorf("pandoc: pdf engine not found or invalid: %w", err)
+			return fmt.Errorf(
+				"pandoc: pdf engine (such as latex) not found or invalid; install and try again: %w",
+				err,
+			)
 		}
 		return fmt.Errorf("pandoc: %w", err)
 	}
