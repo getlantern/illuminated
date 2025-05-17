@@ -14,12 +14,15 @@ var (
 	DefaultConfig         = Config{
 		Base:    "en",
 		Targets: []string{"en", "fa"},
-	}
+	} // CLI has its own defaults which may supercede these
 	DefaultDirNameStaging      = "staging"      // copies of source and intermediate files
 	DefaultDirNameTranslations = "translations" // translation files for internationalization
 	DefaultDirNameTemplates    = "templates"    // template to recreate localized copies
 	DefaultDirNameOutput       = "output"       // final output (typically PDF)
 	DefaultFilePermissions     = os.FileMode(0o750)
+	ErrNoClobber               = fmt.Errorf(
+		"config file already exists",
+	)
 )
 
 // Config defines the base language from which all translations will be derived,
@@ -29,11 +32,15 @@ type Config struct {
 	Targets []string `json:"target"` // translated languages
 }
 
-// Write creates a config file in the specified directory.
-func (c *Config) Write(dir string) error {
+// Write creates a config file in the specified directory,
+// overwriting any existing config if force=true.
+func (c *Config) Write(dir string, force bool) error {
 	filepath := path.Join(dir, DefaultConfigFilename)
 	if _, err := os.Stat(filepath); err == nil {
-		slog.Warn("existing config exists and will be overwritten", "filepath", filepath)
+		if !force {
+			return fmt.Errorf("%s: %w", DefaultConfigFilename, ErrNoClobber)
+		}
+		slog.Info("existing config exists and will be overwritten", "filepath", filepath)
 	} else if !os.IsNotExist(err) {
 		return fmt.Errorf("check config file %v: %w", DefaultConfigFilename, err)
 	}
