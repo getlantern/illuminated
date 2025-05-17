@@ -18,14 +18,14 @@ var (
 )
 
 func TestConfigWrite(t *testing.T) {
-	err := nonDefaultConfig.Write(testProjectDir)
+	err := nonDefaultConfig.Write(testProjectDir, false)
 	require.NoError(t, err)
 	err = os.RemoveAll(testProjectDir)
 	require.NoError(t, err)
 }
 
 func TestConfigRead(t *testing.T) {
-	err := nonDefaultConfig.Write(testProjectDir)
+	err := nonDefaultConfig.Write(testProjectDir, false)
 	require.NoError(t, err)
 
 	var c Config

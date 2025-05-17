@@ -6,7 +6,8 @@ import (
 )
 
 var (
-	config illuminated.Config
+	config      illuminated.Config
+	forceConfig bool // overwrite existing config
 )
 
 // initCmd represents the init command
@@ -15,7 +16,7 @@ var initCmd = &cobra.Command{
 	Short:  "initialize illuminated with non-default options",
 	PreRun: func(cmd *cobra.Command, args []string) { Init() },
 	Run: func(cmd *cobra.Command, args []string) {
-		err := illuminated.DefaultConfig.Write(projectDir)
+		err := illuminated.DefaultConfig.Write(projectDir, force)
 		if err != nil {
 			cmd.PrintErrf("error writing config: %v\n", err)
 			return
@@ -25,6 +26,14 @@ var initCmd = &cobra.Command{
 
 func init() {
 	rootCmd.AddCommand(initCmd)
-	initCmd.PersistentFlags().StringVarP(&config.Base, "base", "b", illuminated.DefaultConfig.Base, "base language for source material (ISO 639-1 codes)")
-	initCmd.PersistentFlags().StringSliceVarP(&config.Targets, "target", "t", illuminated.DefaultConfig.Targets, "target languages (ISO 639-1 codes)")
+	initCmd.PersistentFlags().BoolVarP(&forceConfig, "force", "f", false,
+		"overwrite existing config and all existing files to start over from scratch",
+	)
+	initCmd.PersistentFlags().StringVarP(&config.Base, "base", "b", illuminated.DefaultConfig.Base,
+		"base language for source material (ISO 639-1 codes)",
+	)
+	initCmd.PersistentFlags().StringSliceVarP(&config.Targets, "target", "t",
+		illuminated.DefaultConfig.Targets,
+		"target languages (ISO 639-1 codes)",
+	)
 }
