@@ -8,7 +8,7 @@ import (
 )
 
 var (
-	config      illuminated.Config
+	configOpts  illuminated.Config
 	forceReinit bool // overwrite existing config
 )
 
@@ -18,7 +18,7 @@ var initCmd = &cobra.Command{
 	Short:  "initialize illuminated with non-default options",
 	PreRun: func(cmd *cobra.Command, args []string) { Init() },
 	Run: func(cmd *cobra.Command, args []string) {
-		err := config.Write(projectDir, forceReinit)
+		err := configOpts.Write(projectDir, forceReinit)
 		if err != nil {
 			if errors.Is(err, illuminated.ErrNoClobber) {
 				cmd.PrintErrf("config file already exists, use --force to overwrite")
@@ -33,13 +33,13 @@ func init() {
 	rootCmd.AddCommand(initCmd)
 	initCmd.PersistentFlags().BoolVarP(&forceReinit, "force", "f",
 		false,
-		"overwrite existing config and all existing files to start over from scratch",
+		"overwrite existing config",
 	)
-	initCmd.PersistentFlags().StringVarP(&config.Base, "base", "b",
+	initCmd.PersistentFlags().StringVarP(&configOpts.Base, "base", "b",
 		illuminated.DefaultConfig.Base,
 		"base language for source material (ISO 639-1 codes)",
 	)
-	initCmd.PersistentFlags().StringSliceVarP(&config.Targets, "target", "t",
+	initCmd.PersistentFlags().StringSliceVarP(&configOpts.Targets, "target", "t",
 		illuminated.DefaultConfig.Targets,
 		"target languages (ISO 639-1 codes)",
 	)
