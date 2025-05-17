@@ -1,6 +1,8 @@
 package cmd
 
 import (
+	"errors"
+
 	"github.com/getlantern/illuminated"
 	"github.com/spf13/cobra"
 )
@@ -18,6 +20,9 @@ var initCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		err := config.Write(projectDir, forceReinit)
 		if err != nil {
+			if errors.Is(err, illuminated.ErrNoClobber) {
+				cmd.PrintErrf("config file already exists, use --force to overwrite")
+			}
 			cmd.PrintErrf("error writing config: %v\n", err)
 			return
 		}

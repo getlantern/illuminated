@@ -21,7 +21,7 @@ var (
 	DefaultDirNameOutput       = "output"       // final output (typically PDF)
 	DefaultFilePermissions     = os.FileMode(0o750)
 	ErrNoClobber               = fmt.Errorf(
-		"config file already exists, use --force to overwrite",
+		"config file already exists",
 	)
 )
 
@@ -40,7 +40,7 @@ func (c *Config) Write(dir string, force bool) error {
 		if !force {
 			return fmt.Errorf("%s: %w", DefaultConfigFilename, ErrNoClobber)
 		}
-		slog.Info("existing config exists and will be overwritten, per --force", "filepath", filepath)
+		slog.Info("existing config exists and will be overwritten", "filepath", filepath)
 	} else if !os.IsNotExist(err) {
 		return fmt.Errorf("check config file %v: %w", DefaultConfigFilename, err)
 	}
