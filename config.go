@@ -14,7 +14,7 @@ var (
 	DefaultConfig         = Config{
 		Base:    "en",
 		Targets: []string{"en", "fa"},
-	}
+	} // CLI has its own defaults which may supercede these
 	DefaultDirNameStaging      = "staging"      // copies of source and intermediate files
 	DefaultDirNameTranslations = "translations" // translation files for internationalization
 	DefaultDirNameTemplates    = "templates"    // template to recreate localized copies

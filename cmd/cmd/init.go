@@ -16,7 +16,7 @@ var initCmd = &cobra.Command{
 	Short:  "initialize illuminated with non-default options",
 	PreRun: func(cmd *cobra.Command, args []string) { Init() },
 	Run: func(cmd *cobra.Command, args []string) {
-		err := illuminated.DefaultConfig.Write(projectDir, forceReinit)
+		err := config.Write(projectDir, forceReinit)
 		if err != nil {
 			cmd.PrintErrf("error writing config: %v\n", err)
 			return
