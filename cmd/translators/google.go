@@ -21,9 +21,7 @@ func NewGoogleTranslator(ctx context.Context) (*googleTranslator, error) {
 	if err != nil {
 		return &googleTranslator{}, fmt.Errorf("create Google Translate client: %w", err)
 	}
-	var g googleTranslator
-	g.Client = client
-	return &g, nil
+	return &googleTranslator{Client: client}, nil
 }
 
 // SuportedLanguages returns a list of supported target languages for the given base language.
@@ -74,13 +72,14 @@ func (g *googleTranslator) Translate(
 }
 
 func (g *googleTranslator) Close(ctx context.Context) {
-	if g.Client != nil {
-		if err := g.Client.Close(); err != nil {
-			slog.Error("closing Google Translate client", "error", err)
-		} else {
-			slog.Debug("Google Translate client closed")
-		}
-	} else {
-		slog.Debug("Google Translate client already nil, nothing to close")
+	if g == nil {
+		slog.Debug("translator client 'Google Translate' is already nil, nothing to close")
+		return
 	}
+	err := g.Client.Close()
+	if err != nil {
+		slog.Error("translator client 'Google Translate' failed to close", "error", err)
+		return
+	}
+	slog.Debug("translator client 'Google Translate' closed")
 }
