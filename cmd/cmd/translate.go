@@ -23,15 +23,27 @@ var translateCmd = &cobra.Command{
 	PreRun: func(cmd *cobra.Command, args []string) { Init() },
 	Run: func(cmd *cobra.Command, args []string) {
 		// TODO: load config to determine `base` and `targets`
-		if slices.Contains(validTranslators, argTranslator) {
-			slog.Debug("translating", "translator", argTranslator)
-			translators.TranslateWithGoogle()
-		} else {
+		if !slices.Contains(validTranslators, argTranslator) {
 			slog.Error("invalid translator specified",
 				"given", argTranslator,
 				"valid", validTranslators,
 			)
 			os.Exit(1)
+		}
+		slog.Debug("translating", "translator", argTranslator)
+		switch argTranslator {
+		case translatorGoogle:
+			g, err := translators.NewGoogleTranslator(cmd.Context())
+			if err != nil {
+				slog.Error("create Google translator", "error", err)
+				os.Exit(1)
+			}
+			defer g.Client.Close()
+			err = g.TranslateWithGoogle(cmd.Context())
+			if err != nil {
+				slog.Error("translate with Google", "error", err)
+				os.Exit(1)
+			}
 		}
 	},
 }

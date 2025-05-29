@@ -9,22 +9,34 @@ import (
 	"golang.org/x/text/language"
 )
 
-func TranslateWithGoogle() error {
-	ctx := context.Background()
+// TODO: define interface
+type Translator interface{}
+
+type googleTranslator struct {
+	Client *g.Client
+}
+
+func NewGoogleTranslator(ctx context.Context) (*googleTranslator, error) {
+	// TODO: use non-local ADC credential setup
 	client, err := g.NewClient(ctx)
 	if err != nil {
-		return fmt.Errorf("create Google Translate client: %w", err)
+		return &googleTranslator{}, fmt.Errorf("create Google Translate client: %w", err)
 	}
-	defer client.Close()
+	return &googleTranslator{Client: client}, nil
+}
 
-	lang := g.Language{
-		Name: "Spanish",
-		Tag:  language.Spanish,
+func (g *googleTranslator) TranslateWithGoogle(ctx context.Context) error {
+	g, err := NewGoogleTranslator(ctx)
+	if err != nil {
+		return fmt.Errorf("create Google translator: %w", err)
 	}
-	t, err := client.Translate(
+	defer g.Client.Close()
+
+	tag := language.Spanish
+	t, err := g.Client.Translate(
 		ctx,
 		[]string{"hello, world"},
-		lang.Tag,
+		tag,
 		nil,
 	)
 	if err != nil {
@@ -33,3 +45,8 @@ func TranslateWithGoogle() error {
 	slog.Info("translated", "result", t)
 	return nil
 }
+
+// func (g *googleTranslator) SupportedLanguages() []language.tag, error {
+//     g.client.SupportedLanguages(ctx, language.English)
+//
+// }
