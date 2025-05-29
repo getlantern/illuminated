@@ -12,13 +12,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var (
-	argTranslator    string
-	translatorGoogle = "google"
-	validTranslators = []string{translatorGoogle}
-)
+var argTranslator string
 
-// translateCmd represents the translate command
 var translateCmd = &cobra.Command{
 	Use:    "translate",
 	Short:  "Translate base language into target languages",
@@ -40,23 +35,23 @@ var translateCmd = &cobra.Command{
 			slog.Error("no base language defined in config")
 			os.Exit(1)
 		}
-		if !slices.Contains(validTranslators, argTranslator) {
+		if !slices.Contains(translators.ValidTranslators, argTranslator) {
 			slog.Error("invalid translator specified",
 				"given", argTranslator,
-				"valid", validTranslators,
+				"valid", translators.ValidTranslators,
 			)
 			os.Exit(1)
 		}
 		slog.Debug("translating", "translator", argTranslator)
 		switch argTranslator {
-		case translatorGoogle:
+		case translators.TranslatorGoogle:
 			g, err := translators.NewGoogleTranslator(cmd.Context())
 			if err != nil {
 				slog.Error("create Google translator", "error", err)
 				os.Exit(1)
 			}
 			defer g.Close(cmd.Context())
-			langSupported, err := g.SuportedLanguages(cmd.Context(), config.Base)
+			langSupported, err := g.SupportedLanguages(cmd.Context(), config.Base)
 			if err != nil {
 				slog.Error("get supported languages", "error", err)
 				os.Exit(1)
@@ -84,7 +79,7 @@ var translateCmd = &cobra.Command{
 		default:
 			slog.Error("invalid translator",
 				"given", argTranslator,
-				"expected", validTranslators,
+				"expected", translators.ValidTranslators,
 			)
 		}
 	},
@@ -92,6 +87,6 @@ var translateCmd = &cobra.Command{
 
 func init() {
 	rootCmd.AddCommand(translateCmd)
-	msg := fmt.Sprintf("%v", validTranslators)
-	translateCmd.Flags().StringVarP(&argTranslator, "translator", "t", translatorGoogle, msg)
+	msg := fmt.Sprintf("%v", translators.ValidTranslators)
+	translateCmd.Flags().StringVarP(&argTranslator, "translator", "t", translators.TranslatorGoogle, msg)
 }

@@ -5,6 +5,8 @@ import (
 	"fmt"
 )
 
+// mockTranslator allows for unit testing mock calls to a translation service.
+// Network calls are behind an "integration" build tag.
 type mockTranslator struct{}
 
 func (m *mockTranslator) SupportedLanguages(ctx context.Context, baseLang string) ([]string, error) {

@@ -9,14 +9,6 @@ import (
 	"golang.org/x/text/language"
 )
 
-// Translator is an interface for a generic translator.
-// TODO: move this to another package? or the cli?
-type Translator interface {
-	SupportedLanguages(ctx context.Context, baseLang string) ([]string, error)
-	Translate(ctx context.Context, targetLang string, texts []string) ([]string, error)
-	Close(ctx context.Context)
-}
-
 // googleTranslator implements the Translator interface using Google Translate API.
 type googleTranslator struct {
 	Client *g.Client
@@ -29,11 +21,13 @@ func NewGoogleTranslator(ctx context.Context) (*googleTranslator, error) {
 	if err != nil {
 		return &googleTranslator{}, fmt.Errorf("create Google Translate client: %w", err)
 	}
-	return &googleTranslator{Client: client}, nil
+	var g googleTranslator
+	g.Client = client
+	return &g, nil
 }
 
 // SuportedLanguages returns a list of supported target languages for the given base language.
-func (g *googleTranslator) SuportedLanguages(ctx context.Context, baseLang string) ([]string, error) {
+func (g *googleTranslator) SupportedLanguages(ctx context.Context, baseLang string) ([]string, error) {
 	tag := language.Make(baseLang)
 	slog.Debug("making tag from base lang", "baseLang", baseLang, "tag", tag)
 	langs, err := g.Client.SupportedLanguages(ctx, tag)
