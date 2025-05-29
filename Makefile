@@ -31,3 +31,8 @@ cleanup:
 	./$(BINARY) cleanup --force --verbose
 	rm -f $(BINARY)
 
+translate: $(BINARY)
+	./$(BINARY) cleanup --force --verbose
+	./$(BINARY) init --verbose
+	./$(BINARY) update --source example --verbose
+	./$(BINARY) translate --verbose

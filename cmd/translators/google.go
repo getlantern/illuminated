@@ -9,15 +9,22 @@ import (
 	"golang.org/x/text/language"
 )
 
-// TODO: define interface
-type Translator interface{}
+// Translator is an interface for a generic translator.
+// TODO: move this to another package? or the cli?
+type Translator interface {
+	SupportedLanguages(ctx context.Context, baseLang string) ([]string, error)
+	Translate(ctx context.Context, targetLang string, texts []string) ([]string, error)
+	Close(ctx context.Context)
+}
 
+// googleTranslator implements the Translator interface using Google Translate API.
 type googleTranslator struct {
 	Client *g.Client
 }
 
+// NewGoogleTranslator returns a new Google Translate client.
 func NewGoogleTranslator(ctx context.Context) (*googleTranslator, error) {
-	// TODO: use non-local ADC credential setup
+	// TODO: use non-local ADC credential setup for production
 	client, err := g.NewClient(ctx)
 	if err != nil {
 		return &googleTranslator{}, fmt.Errorf("create Google Translate client: %w", err)
@@ -25,23 +32,61 @@ func NewGoogleTranslator(ctx context.Context) (*googleTranslator, error) {
 	return &googleTranslator{Client: client}, nil
 }
 
-func (g *googleTranslator) TranslateWithGoogle(ctx context.Context) error {
-	g, err := NewGoogleTranslator(ctx)
+// SuportedLanguages returns a list of supported target languages for the given base language.
+func (g *googleTranslator) SuportedLanguages(ctx context.Context, baseLang string) ([]string, error) {
+	tag := language.Make(baseLang)
+	slog.Debug("making tag from base lang", "baseLang", baseLang, "tag", tag)
+	langs, err := g.Client.SupportedLanguages(ctx, tag)
 	if err != nil {
-		return fmt.Errorf("create Google translator: %w", err)
+		return nil, fmt.Errorf("get supported languages: %w", err)
 	}
-	defer g.Client.Close()
+	var langCodes []string
+	for _, lang := range langs {
+		langCodes = append(langCodes, lang.Tag.String())
+	}
+	return langCodes, nil
+}
 
-	tag := language.Spanish
+// Translate translates the given texts into the target language.
+func (g *googleTranslator) Translate(
+	ctx context.Context,
+	targetLang string,
+	texts []string,
+) ([]string, error) {
+	tag := language.Make(targetLang)
+	slog.Debug("making language tag for target lang", "tag", tag)
 	t, err := g.Client.Translate(
 		ctx,
-		[]string{"hello, world"},
+		texts,
 		tag,
 		nil,
 	)
 	if err != nil {
-		return fmt.Errorf("translate text: %w", err)
+		return nil, fmt.Errorf("translate text: %w", err)
 	}
-	slog.Info("translated", "result", t)
-	return nil
+	for i, translation := range t {
+		slog.Debug("translated text",
+			"index", i,
+			"source", translation.Source,
+			"target", translation.Model,
+			"text", translation.Text,
+		)
+	}
+	var translatedTexts []string
+	for _, translation := range t {
+		translatedTexts = append(translatedTexts, translation.Text)
+	}
+	return translatedTexts, nil
+}
+
+func (g *googleTranslator) Close(ctx context.Context) {
+	if g.Client != nil {
+		if err := g.Client.Close(); err != nil {
+			slog.Error("closing Google Translate client", "error", err)
+		} else {
+			slog.Debug("Google Translate client closed")
+		}
+	} else {
+		slog.Debug("Google Translate client already nil, nothing to close")
+	}
 }
