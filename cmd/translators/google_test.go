@@ -1,8 +1,23 @@
+//go:build integration
+
 package translators
 
-import "testing"
+import (
+	"context"
+	"testing"
 
-func TestFoo(t *testing.T) {
-	Foo()
-	t.Log("foo ran")
+	"github.com/stretchr/testify/require"
+)
+
+func TestGoogle(t *testing.T) {
+	ctx := context.Background()
+	g, err := NewGoogleTranslator(ctx)
+	require.NoError(t, err)
+	defer g.Close(ctx)
+	langs, err := g.SuportedLanguages(ctx, "en")
+	require.NoError(t, err)
+	require.NotEmpty(t, langs)
+	for _, lang := range langs {
+		t.Logf("Supported language: %s", lang)
+	}
 }
