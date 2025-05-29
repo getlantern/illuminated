@@ -8,6 +8,7 @@ import (
 
 	"github.com/getlantern/illuminated/cmd/translators"
 	"github.com/spf13/cobra"
+	"golang.org/x/text/language"
 )
 
 var (
@@ -39,6 +40,16 @@ var translateCmd = &cobra.Command{
 				os.Exit(1)
 			}
 			defer g.Client.Close()
+
+			obj, err := g.Client.SupportedLanguages(cmd.Context(), language.English)
+			if err != nil {
+				slog.Error("get supported languages", "error", err)
+				os.Exit(1)
+			}
+			for _, lang := range obj {
+				slog.Debug("supported language", "language", lang)
+			}
+
 			err = g.TranslateWithGoogle(cmd.Context())
 			if err != nil {
 				slog.Error("translate with Google", "error", err)

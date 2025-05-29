@@ -45,8 +45,3 @@ func (g *googleTranslator) TranslateWithGoogle(ctx context.Context) error {
 	slog.Info("translated", "result", t)
 	return nil
 }
-
-// func (g *googleTranslator) SupportedLanguages() []language.tag, error {
-//     g.client.SupportedLanguages(ctx, language.English)
-//
-// }
