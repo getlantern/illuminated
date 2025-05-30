@@ -63,6 +63,51 @@ var translateCmd = &cobra.Command{
 			slog.Error("get supported languages", "error", err)
 			os.Exit(1)
 		}
+
+		// read the directory once
+		txPath := path.Join(projectDir, illuminated.DefaultDirNameTranslations)
+		files, err := os.ReadDir(txPath)
+		if err != nil {
+			slog.Error("read translations directory",
+				"dir", txPath,
+				"error", err,
+			)
+			os.Exit(1)
+		}
+
+		// load the base language, for use by all targets
+		baseFileTexts := make(map[string]map[string]string)
+		for _, file := range files {
+			if file.IsDir() || !strings.HasSuffix(file.Name(), ".json") {
+				continue
+			}
+			if strings.HasPrefix(file.Name(), config.Base) {
+				f, err := os.ReadFile(path.Join(txPath, file.Name()))
+				if err != nil {
+					slog.Error("read base language file", "error", err)
+					os.Exit(1)
+				}
+				var baseText map[string]string
+				err = json.Unmarshal(f, &baseText)
+				if err != nil {
+					slog.Error("unmarshal base language file", "error", err)
+					os.Exit(1)
+				}
+				if len(baseText) == 0 {
+					slog.Error("base language file is empty or invalid", "file", file.Name())
+					os.Exit(1)
+				}
+				name := strings.TrimSuffix(file.Name(), ".json")
+				name = strings.TrimPrefix(name, config.Base+".")
+				slog.Debug("base language text loaded",
+					"file", file.Name(),
+					"name", name,
+					"textCount", len(baseText),
+				)
+				baseFileTexts[name] = baseText
+			}
+		}
+
 		for _, target := range config.Targets {
 			if !slices.Contains(langSupported, target) {
 				slog.Error("target language not supported by translator",
@@ -73,150 +118,109 @@ var translateCmd = &cobra.Command{
 			}
 			slog.Debug("translating texts", "target", target)
 
-			txPath := path.Join(projectDir, illuminated.DefaultDirNameTranslations)
-			files, err := os.ReadDir(txPath)
-			if err != nil {
-				slog.Error("read translations directory",
-					"dir", txPath,
-					"error", err,
-				)
-				os.Exit(1)
+			// Second, we translate each target languages using the base language.
+			if target == config.Base {
+				slog.Debug("skipping translation for base language, assuming base already exists", "base", config.Base)
+				continue
 			}
-
-			// First, we load the base language
-			baseFileTexts := make(map[string]map[string]string)
+			var updatedFilesQty int
 			for _, file := range files {
+				var targetText map[string]string
 				if file.IsDir() || !strings.HasSuffix(file.Name(), ".json") {
 					continue
 				}
-				if strings.HasPrefix(file.Name(), config.Base) {
-					// slog.Warn("TODO: translate", "file", file.Name())
-					f, err := os.ReadFile(path.Join(txPath, file.Name()))
-					if err != nil {
-						slog.Error("read base language file", "error", err)
-						os.Exit(1)
-					}
-					var baseText map[string]string
-					err = json.Unmarshal(f, &baseText)
-					if err != nil {
-						slog.Error("unmarshal base language file", "error", err)
-						os.Exit(1)
-					}
-					if len(baseText) == 0 {
-						slog.Error("base language file is empty or invalid", "file", file.Name())
-						os.Exit(1)
-					}
-					name := strings.TrimSuffix(file.Name(), ".json")
-					name = strings.TrimPrefix(name, config.Base+".")
-					slog.Debug("base language text loaded",
-						"file", file.Name(),
-						"name", name,
-						"textCount", len(baseText),
-					)
-					baseFileTexts[name] = baseText
-
-					// for key, text := range baseText {
-					// 	slog.Debug("translating text", "key", key, "text", text)
-					// }
-				}
-			}
-			// TODO: remove
-			slog.Warn("pausing for debug")
-			// time.Sleep(1 * time.Minute)
-			// Second, we translate each target languages using the base language.
-			for i, target := range config.Targets {
-				slog.Warn("iteration", "i", i)
-				if target == config.Base {
-					slog.Debug("skipping translation for base language, assuming base already exists", "base", config.Base)
+				if !strings.HasPrefix(file.Name(), target+".") {
 					continue
 				}
-				for _, file := range files {
-					if file.IsDir() || !strings.HasSuffix(file.Name(), ".json") {
+				f, err := os.ReadFile(path.Join(txPath, file.Name()))
+				if err != nil {
+					slog.Error("read target language file", "error", err, "file", file.Name())
+					os.Exit(1)
+				}
+				err = json.Unmarshal(f, &targetText)
+				if err != nil {
+					slog.Error("unmarshal target language file", "error", err, "file", file.Name())
+					os.Exit(1)
+				}
+				if len(targetText) == 0 {
+					slog.Error("target language file is empty or invalid", "file", file.Name())
+					os.Exit(1)
+				}
+				name := strings.TrimSuffix(file.Name(), ".json")
+				name = strings.TrimPrefix(name, target+".")
+				slog.Debug("target language text loaded",
+					"file", file.Name(),
+					"name", name,
+					"textCount", len(targetText),
+				)
+				// Perform translation
+				targetStringsQty := 0
+				for key, text := range baseFileTexts[name] {
+					v, exists := targetText[key]
+					if exists && !overwrite && v != "" {
+						slog.Debug(
+							"skipping existing translation to avoid clobber; use -o/--overwrite",
+							"file", file.Name(),
+							"existing value", v,
+							"key", key,
+						)
 						continue
 					}
-					if strings.HasPrefix(file.Name(), target) {
-						f, err := os.ReadFile(path.Join(txPath, file.Name()))
-						if err != nil {
-							slog.Error("read target language file", "error", err, "file", file.Name())
-							os.Exit(1)
-						}
-						var targetText map[string]string
-						err = json.Unmarshal(f, &targetText)
-						if err != nil {
-							slog.Error("unmarshal target language file", "error", err, "file", file.Name())
-							os.Exit(1)
-						}
-						if len(targetText) == 0 {
-							slog.Error("target language file is empty or invalid", "file", file.Name())
-							os.Exit(1)
-						}
-						name := strings.TrimSuffix(file.Name(), ".json")
-						name = strings.TrimPrefix(name, target+".")
-						slog.Debug("target language text loaded",
-							"file", file.Name(),
-							"name", name,
-							"textCount", len(targetText),
-						)
-						// Perform translation
-						for key, text := range baseFileTexts[name] {
-							v, exists := targetText[key]
-							if exists && !overwrite && v != "" {
-								slog.Debug(
-									"skipping existing translation; to clobber, use -o/--overwrite",
-									"key", key,
-									"text", text,
-									"target", targetText[key],
-									"file", file.Name(),
-									"v", v,
-								)
-								continue
-							}
-							result, err := g.Translate(cmd.Context(), target, []string{text})
-							if err != nil {
-								slog.Error("translation failure", "error", err, "key", key, "text", text)
-								os.Exit(1)
-							}
-							if len(result) == 0 {
-								slog.Error("translation result is empty", "key", key, "text", text)
-								os.Exit(1)
-							}
-							// TODO: handle multiple results?
-							targetText[key] = result[0]
-							slog.Debug("translated text",
-								"key", key,
-								"text", text,
-								"result", targetText[key],
-							)
-							// TODO: write the translated text back to the file
-							// jsonify and write the file
-							outPath := path.Join(txPath, file.Name())
-							content, err := json.MarshalIndent(targetText, "", "  ")
-							if err != nil {
-								slog.Error("marshal target language file", "error", err, "file", file.Name())
-								os.Exit(1)
-							}
-							err = os.WriteFile(outPath, content, illuminated.DefaultFilePermissions)
-							if err != nil {
-								slog.Error("write target language file", "error", err, "file", file.Name())
-								os.Exit(1)
-							}
-							slog.Info("translation complete", "file", file.Name())
-						}
+					result, err := g.Translate(cmd.Context(), target, []string{text})
+					if err != nil {
+						slog.Error("translation failure", "error", err, "key", key, "text", text)
+						os.Exit(1)
 					}
+					if len(result) == 0 {
+						slog.Error("translation result is empty", "key", key, "text", text)
+						os.Exit(1)
+					}
+					// NOTE: only one result is expected, forcing a line by line translation.
+					// It is possible to reduce network trips by packing the tranlation map
+					// into an array, but that would require handling ordering concerns,
+					// while this approach guarantees completion in a single pass,
+					// and skips existing fields unless -o/--overwrite is true.
+					if len(result) != 1 {
+						slog.Error("length error",
+							"expected", 1,
+							"got", len(result),
+							"result", result,
+						)
+						os.Exit(1)
+					}
+					targetText[key] = result[0]
+					slog.Debug("translation complete for text string",
+						"key", key,
+						"text", text,
+						"result", targetText[key],
+					)
+					targetStringsQty++
 				}
+				outPath := path.Join(txPath, file.Name())
+				content, err := json.MarshalIndent(targetText, "", "  ")
+				if err != nil {
+					slog.Error("marshal target language file", "error", err, "file", file.Name())
+					os.Exit(1)
+				}
+				err = os.WriteFile(outPath, content, illuminated.DefaultFilePermissions)
+				if err != nil {
+					slog.Error("write target language file", "error", err, "file", file.Name())
+					os.Exit(1)
+				}
+				updatedFilesQty++
+				slog.Info("translations complete for file",
+					"file", file.Name(),
+					"translated", targetStringsQty,
+					"total", len(baseFileTexts[name]),
+				)
 			}
+			slog.Info("translations complete for language",
+				"language", target,
+				"updated", updatedFilesQty,
+			)
 		}
+		slog.Info("all translations complete!")
 	},
-
-	// TODO: use strings or maybe json is available?
-	// txs, err := g.Translate(cmd.Context(), target, []string{"Hello, world!"})
-	// if err != nil {
-	// 	slog.Error("translate with Google", "error", err)
-	// 	os.Exit(1)
-	// }
-	// for _, tx := range txs {
-	// 	slog.Info("translated text", "text", tx)
-	// }
 }
 
 func init() {

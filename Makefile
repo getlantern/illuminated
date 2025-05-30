@@ -31,14 +31,14 @@ cleanup:
 	./$(BINARY) cleanup --force --verbose
 	rm -f $(BINARY)
 
-translate: $(BINARY)
-	./$(BINARY) cleanup --force --verbose
-	./$(BINARY) init --verbose
-	./$(BINARY) update --source example --verbose
-	./$(BINARY) translate --verbose
+# translate: $(BINARY)
+# 	./$(BINARY) cleanup --force --verbose
+# 	./$(BINARY) init --verbose
+# 	./$(BINARY) update --source example --verbose
+# 	./$(BINARY) translate --verbose
 
 translateq: $(BINARY)
 	./$(BINARY) cleanup --force 
-	./$(BINARY) init 
+	./$(BINARY) init --base en --target en,fa,ru 
 	./$(BINARY) update --source example 
-	./$(BINARY) translate 
+	./$(BINARY) translate --translator mock 

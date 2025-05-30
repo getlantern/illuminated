@@ -5,9 +5,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var (
-	config illuminated.Config
-)
+var config illuminated.Config
 
 // initCmd represents the init command
 var initCmd = &cobra.Command{

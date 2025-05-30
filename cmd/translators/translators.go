@@ -10,7 +10,10 @@ const (
 	MockTranslation = "mock"
 )
 
-var ValidTranslators = []string{GoogleTranslate}
+var ValidTranslators = []string{
+	GoogleTranslate,
+	MockTranslation,
+}
 
 // Translator is an interface for a generic translator.
 type Translator interface {

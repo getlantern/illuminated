@@ -60,7 +60,7 @@ func (g *googleTranslator) Translate(
 		slog.Debug("translated text",
 			"index", i,
 			"source", translation.Source,
-			"target", translation.Model,
+			"model", translation.Model,
 			"text", translation.Text,
 		)
 	}
