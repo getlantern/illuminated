@@ -36,3 +36,9 @@ translate: $(BINARY)
 	./$(BINARY) init --verbose
 	./$(BINARY) update --source example --verbose
 	./$(BINARY) translate --verbose
+
+translateq: $(BINARY)
+	./$(BINARY) cleanup --force 
+	./$(BINARY) init 
+	./$(BINARY) update --source example 
+	./$(BINARY) translate 

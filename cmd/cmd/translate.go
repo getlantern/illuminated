@@ -120,8 +120,16 @@ var translateCmd = &cobra.Command{
 					// }
 				}
 			}
+			// TODO: remove
+			slog.Warn("pausing for debug")
+			// time.Sleep(1 * time.Minute)
 			// Second, we translate each target languages using the base language.
-			for _, target := range config.Targets {
+			for i, target := range config.Targets {
+				slog.Warn("iteration", "i", i)
+				if target == config.Base {
+					slog.Debug("skipping translation for base language, assuming base already exists", "base", config.Base)
+					continue
+				}
 				for _, file := range files {
 					if file.IsDir() || !strings.HasSuffix(file.Name(), ".json") {
 						continue
@@ -151,13 +159,15 @@ var translateCmd = &cobra.Command{
 						)
 						// Perform translation
 						for key, text := range baseFileTexts[name] {
-							_, exists := targetText[key]
-							if exists && !overwrite {
+							v, exists := targetText[key]
+							if exists && !overwrite && v != "" {
 								slog.Debug(
 									"skipping existing translation; to clobber, use -o/--overwrite",
 									"key", key,
 									"text", text,
 									"target", targetText[key],
+									"file", file.Name(),
+									"v", v,
 								)
 								continue
 							}
