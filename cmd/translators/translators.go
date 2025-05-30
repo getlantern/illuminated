@@ -6,11 +6,11 @@ import (
 )
 
 const (
-	TranslatorGoogle = "google"
-	TranslatorMock   = "mock"
+	GoogleTranslate = "google"
+	MockTranslation = "mock"
 )
 
-var ValidTranslators = []string{TranslatorGoogle}
+var ValidTranslators = []string{GoogleTranslate}
 
 // Translator is an interface for a generic translator.
 type Translator interface {
@@ -23,9 +23,9 @@ type Translator interface {
 // to satisfy the Translator interface.
 func NewTranslator(ctx context.Context, translatorType string) (Translator, error) {
 	switch translatorType {
-	case TranslatorGoogle:
+	case GoogleTranslate:
 		return NewGoogleTranslator(ctx)
-	case TranslatorMock:
+	case MockTranslation:
 		return &mockTranslator{}, nil
 	default:
 		return nil, fmt.Errorf(
