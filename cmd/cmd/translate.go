@@ -51,7 +51,7 @@ var translateCmd = &cobra.Command{
 		}
 		slog.Debug("translating", "translator", translator)
 
-		g, err := translators.NewTranslator(cmd.Context(), translators.GoogleTranslate)
+		g, err := translators.NewTranslator(cmd.Context(), translator)
 		if err != nil {
 			slog.Error("translator could not be initialized", "error", err)
 			os.Exit(1)

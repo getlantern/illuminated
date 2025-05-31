@@ -11,9 +11,11 @@ const (
 )
 
 var ValidTranslators = []string{
-	GoogleTranslate,
 	MockTranslation,
+	GoogleTranslate,
 }
+
+var ErrTranslatorUnsupported = fmt.Errorf("translator not supported")
 
 // Translator is an interface for a generic translator.
 type Translator interface {
@@ -32,7 +34,8 @@ func NewTranslator(ctx context.Context, translatorType string) (Translator, erro
 		return &mockTranslator{}, nil
 	default:
 		return nil, fmt.Errorf(
-			"unknown translator type; given: %s, expected: %v",
+			"%w: (given: %s, expected: %v)",
+			ErrTranslatorUnsupported,
 			translatorType,
 			ValidTranslators,
 		)

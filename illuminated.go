@@ -210,8 +210,16 @@ func GenerateHTMLs(baseLang string, targetLang []string, projectDir string, stri
 							"targetLang", lang,
 							"baseTx", baseTx[baseLang][k],
 						)
+						targetTx[filename][k] = baseTx[baseLang][k]
+						slog.Debug("substituted base language string",
+							"key", k,
+							"file", filename,
+							"baseLang", baseLang,
+							"targetLang", lang,
+							"baseTx", baseTx[baseLang][k],
+							"targetTx", targetTx[filename][k],
+						)
 					}
-					targetTx[filename][k] = baseTx[baseLang][k]
 				}
 			}
 		}

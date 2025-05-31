@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"os"
 	"path"
+	"strings"
 
 	"github.com/getlantern/illuminated"
 	"github.com/spf13/cobra"
@@ -43,6 +44,7 @@ var generateCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
+		// generate all individual HTML files from templates and translations
 		err = illuminated.GenerateHTMLs(config.Base, config.Targets, projectDir, strict)
 		if err != nil {
 			return fmt.Errorf("generate HTMLs: %v", err)
@@ -58,6 +60,7 @@ var generateCmd = &cobra.Command{
 				if err != nil {
 					return fmt.Errorf("join HTMLs: %v", err)
 				}
+				slog.Debug("created joined HTML file", "lang", lang, "path", joinedFilePath)
 			}
 		}
 
@@ -65,21 +68,38 @@ var generateCmd = &cobra.Command{
 			return nil
 		}
 
-		for _, lang := range config.Targets {
-			err = illuminated.WritePDF(
-				path.Join(joinedFilePath),
-				path.Join(
-					projectDir,
-					illuminated.DefaultDirNameOutput,
-					fmt.Sprintf("%s.%s.%s", lang, name, "pdf"),
-				),
-				path.Join(projectDir, illuminated.DefaultDirNameStaging),
-			)
-			if err != nil {
-				return fmt.Errorf("write PDF: %v", err)
-			}
-		}
 		outputDir := path.Join(projectDir, illuminated.DefaultDirNameOutput)
+		for _, lang := range config.Targets {
+			files, err := os.ReadDir(outputDir)
+			if err != nil {
+				return fmt.Errorf("read output directory: %v", err)
+			}
+			for _, file := range files {
+				if strings.Contains(file.Name(), ".html") {
+					slog.Debug("converting html to pdf", "file", file.Name())
+					err = illuminated.WritePDF(
+						path.Join(
+							projectDir,
+							illuminated.DefaultDirNameOutput,
+							file.Name(),
+						),
+						path.Join(
+							projectDir,
+							illuminated.DefaultDirNameOutput,
+							fmt.Sprintf(strings.ReplaceAll(file.Name(), ".html", ".pdf")),
+						),
+						path.Join(projectDir, illuminated.DefaultDirNameStaging),
+					)
+					if err != nil {
+						return fmt.Errorf("write PDF: %v", err)
+					}
+				}
+			}
+			slog.Debug("write pdf complete", "lang", lang, "outputDir", outputDir)
+		}
+
+		// Because at least one of html or pdf is required,
+		// if html is not desired as an output, we can delete them all.
 		if !html {
 			files, err := os.ReadDir(outputDir)
 			if err != nil {
