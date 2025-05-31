@@ -1,48 +1,66 @@
 #!/usr/bin/env bash
 
+usage() {
+    echo "usage: $0 {local|remote} {mock|google}"
+}
+
+
+if [[ $# -lt 2 ]]; then
+  usage
+  exit 1
+fi
+
+if [[ -n "$DEBUG" ]]; then
+  echo "DEBUG=$DEBUG, running with --verbose"
+  VERBOSE="--verbose"
+fi
+
 build() {
-  echo "building..."
+  echo "building ..."
   cd cmd || exit 1
   go build -o ../illuminated || exit 1
   cd ..
 }
 
-build
+restart() {
+  echo "cleanup ..."
+  ./illuminated cleanup --force "$VERBOSE"
+  echo "initializing ..."
+  ./illuminated init --base en --target en,fa,ru,zh "$VERBOSE"
+}
 
-# case switch with "test, remote, local, and translate"
+build
+restart
+
 case "$1" in
-  test)
-    echo "testing..."
-    go test ./... -v || exit 1
-    ;;
   local)
-    echo "generating local..."
-    ./illuminated cleanup --force --verbose
-    ./illuminated init --verbose
-    ./illuminated update --source example --verbose
-    ./illuminated generate --pdf --html --verbose
-    # Add your local command logic here
+    SOURCE="example"
+    echo "generating local ($SOURCE) ..."
     ;;
   remote)
-    echo "generating remote..."
-    ./illuminated cleanup --force --verbose
-    ./illuminated init --verbose
-    ./illuminated update --source https://github.com/getlantern/guide.wiki.git --verbose
-    ./illuminated generate --pdf --html --verbose
-    # Add your remote command logic here
-    ;;
-  translate)
-    echo "translating..."
-    ./illuminated cleanup --force --verbose
-    # ./illuminated init --base en --target en,fa,ru,zh --verbose
-    ./illuminated init --base en --target en --verbose
-    ./illuminated update --source example --verbose
-    ./illuminated translate --translator mock --verbose
-    ./illuminated generate --html --pdf --join --verbose
-    # Add your translation logic here
+    SOURCE="https://github.com/getlantern/guide.wiki.git"
+    echo "generating remote ($SOURCE) ..."
     ;;
   *)
-    echo "usage: $0 {test|remote|local|translate}"
+    usage
+    exit 1
+esac
+
+case "$2" in
+  mock)
+    echo "translating (google) ..."
+    TRANSLATOR="mock"
+    ;;
+  google)
+    echo "translating (mock) ..."
+    TRANSLATOR="google"
+    ;;
+  *)
+    usage
     exit 1
     ;;
 esac
+
+./illuminated update --source "$SOURCE" "$VERBOSE"
+./illuminated translate --translator "$TRANSLATOR" "$VERBOSE"
+./illuminated generate --pdf --join "$VERBOSE"

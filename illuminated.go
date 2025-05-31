@@ -223,17 +223,6 @@ func GenerateHTMLs(baseLang string, targetLang []string, projectDir string, stri
 		}
 	}
 
-	// for k0, v0 := range tx {
-	// 	fmt.Println(k0)
-	// 	for k1, v1 := range v0 {
-	// 		fmt.Printf("  %s:\n", k1)
-	// 		// fmt.Printf("  %s: %v\n", k1, v1)
-	// 		for k2, v2 := range v1 {
-	// 			fmt.Printf("    %s: %s\n", k2, v2)
-	// 		}
-	// 	}
-	// }
-
 	// generate HTML file for every existing translation
 	dirOut := path.Join(projectDir, DefaultDirNameOutput)
 	err = os.MkdirAll(dirOut, DefaultFilePermissions)
