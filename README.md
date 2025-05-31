@@ -13,7 +13,7 @@ It should be possible for an update to an arbitrary markdown, like en/doc.md, to
 ### development
 To delete all example files and start over with newly built binary, run:
 ```sh
-$ make local
+$ ./test.sh {local|remote} {mock|google}
 ```
 
 ### production
@@ -74,3 +74,8 @@ flowchart LR
 - [ ] handle footer
 - [ ] don't mutate data in place
 - [ ] default config move to cmd?
+
+
+## fonts
+- DejaVu works for ru, fa, not zh
+

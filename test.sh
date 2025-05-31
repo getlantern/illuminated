@@ -26,7 +26,7 @@ restart() {
   echo "cleanup ..."
   ./illuminated cleanup --force "$VERBOSE"
   echo "initializing ..."
-  ./illuminated init --base en --target en,fa,ru,zh "$VERBOSE"
+  ./illuminated init --base en --target en,fa,ru,ar,zh "$VERBOSE"
 }
 
 build
@@ -63,4 +63,4 @@ esac
 
 ./illuminated update --source "$SOURCE" "$VERBOSE"
 ./illuminated translate --translator "$TRANSLATOR" "$VERBOSE"
-./illuminated generate --pdf --join "$VERBOSE"
+./illuminated generate --pdf "$VERBOSE"

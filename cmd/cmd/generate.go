@@ -75,6 +75,9 @@ var generateCmd = &cobra.Command{
 				return fmt.Errorf("read output directory: %v", err)
 			}
 			for _, file := range files {
+				if !strings.HasPrefix(file.Name(), lang+".") {
+					continue
+				}
 				if strings.Contains(file.Name(), ".html") {
 					slog.Debug("converting html to pdf", "file", file.Name())
 					err = illuminated.WritePDF(

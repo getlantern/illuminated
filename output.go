@@ -57,16 +57,46 @@ func WritePDF(sourcePath, outPath string, resourcePath string) error {
 		return fmt.Errorf("pandoc not found in PATH, install and try again: %w", err)
 	}
 
+	// TODO: add back breaks?
 	// err = formatBreaks(sourcePath)
 	// if err != nil {
 	// 	return fmt.Errorf("format breaks in HTML: %w", err)
 	// }
 
-	title := strings.TrimSuffix(sourcePath, ".html")
+	title := strings.TrimSuffix(path.Base(sourcePath), ".html")
 
 	if resourcePath == "" {
 		slog.Debug("no resource path provided, assuming '.'")
 		resourcePath = "."
+	}
+
+	parts := strings.Split(title, ".")
+	if len(parts) < 2 {
+		return fmt.Errorf("sourcePath %q does not contain a language prefix", sourcePath)
+	}
+	lang := parts[0]
+
+	// NOTE: LaTeX and unicode fonts for PDF engines are tricky.
+	var pdfEngine, mainfont, dir string
+	switch lang {
+	case "en", "ru":
+		pdfEngine = "xelatex"
+		mainfont = "DejaVu Serif"
+		dir = "ltr"
+	case "fa":
+		pdfEngine = "xelatex"
+		mainfont = "DejaVu Sans"
+		dir = "rtl"
+	case "ar":
+		pdfEngine = "xelatex"
+		mainfont = "DejaVu Sans"
+		dir = "rtl"
+	case "zh":
+		pdfEngine = "xelatex"
+		mainfont = "Noto Serif CJK SC"
+		dir = "ltr"
+	default:
+		slog.Error("unsupported language prefix in sourcePath", "lang", lang)
 	}
 
 	cmd := exec.Command(
@@ -75,10 +105,12 @@ func WritePDF(sourcePath, outPath string, resourcePath string) error {
 		"--metadata", fmt.Sprintf("date=%s", time.Now().Format("2006-01-02")),
 		"--toc",
 		"--resource-path", resourcePath,
-		"--pdf-engine", "pdflatex",
+		"--pdf-engine", pdfEngine,
+		"--variable", fmt.Sprintf("mainfont=%s", mainfont),
+		"--variable", fmt.Sprintf("lang=%s", lang),
+		"--variable", fmt.Sprintf("dir=%s", dir),
 		sourcePath, "-o", outPath,
 	)
-
 	err = cmd.Run()
 	if err != nil {
 		if strings.Contains(err.Error(), "47") {
@@ -89,6 +121,9 @@ func WritePDF(sourcePath, outPath string, resourcePath string) error {
 		}
 		return fmt.Errorf("pandoc: %w", err)
 	}
+	slog.Info("generated pdf successfully",
+		"name", outPath,
+	)
 	return nil
 }
 
