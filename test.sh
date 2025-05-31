@@ -48,11 +48,11 @@ esac
 
 case "$2" in
   mock)
-    echo "translating (google) ..."
+    echo "translating (mock) ..."
     TRANSLATOR="mock"
     ;;
   google)
-    echo "translating (mock) ..."
+    echo "translating (google) ..."
     TRANSLATOR="google"
     ;;
   *)
