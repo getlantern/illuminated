@@ -14,7 +14,7 @@ func TestGoogle(t *testing.T) {
 	g, err := NewGoogleTranslator(ctx)
 	require.NoError(t, err)
 	defer g.Close(ctx)
-	langs, err := g.SuportedLanguages(ctx, "en")
+	langs, err := g.SupportedLanguages(ctx, "en")
 	require.NoError(t, err)
 	require.NotEmpty(t, langs)
 	for _, lang := range langs {
