@@ -89,7 +89,7 @@ var generateCmd = &cobra.Command{
 						path.Join(
 							projectDir,
 							illuminated.DefaultDirNameOutput,
-							fmt.Sprintf(strings.ReplaceAll(file.Name(), ".html", ".pdf")),
+							strings.ReplaceAll(file.Name(), ".html", ".pdf"),
 						),
 						path.Join(projectDir, illuminated.DefaultDirNameStaging),
 					)
