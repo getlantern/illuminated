@@ -76,7 +76,7 @@ func WritePDF(sourcePath, outPath string, resourcePath string) error {
 	}
 	lang := parts[0]
 
-	// NOTE: LaTeX and unicode fonts for PDF engines are tricky.
+	// NOTE: LaTeX and unicode fonts for PDF engines are tricky. Beware.
 	var pdfEngine, mainfont, dir string
 	switch lang {
 	case "en", "ru":
