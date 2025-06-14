@@ -34,12 +34,15 @@ $ ./illuminated generate --verbose \
   --join
 ```
 
-Use the help command for details.
+Stage the source documentation (either a local filepath or a wiki URL).
 ```sh
-$ ./illuminated --help
+$ ./illuminated update --source $WIKI_URL -d docs
 ```
 
----
+After translation, generate html and/or pdf, optionally joined. Strict will fail on any missing translations, otherwise, any missing strings will fallback to the base language specified at initialization.
+```sh
+$ ./illuminated generate -d docs --html --pdf --join --strict
+```
 
 ## Future Work
 - [x] read from ~dir~ or ~wiki source~

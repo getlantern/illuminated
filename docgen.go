@@ -55,13 +55,3 @@ func MarkdownToHTML(inputPath string, outputPath string) error {
 
 	return nil
 }
-
-// func generateTranslationHTMLs(baseLangFilepath string, targetLangs []string) error {
-//     for _, lang := range targetLangs {
-//         if lang == baseLang {
-//             continue
-//         }
-//         outputFile := path.Join(DefaultDirNameHTML, fmt.Sprintf("%s.%s.html", lang, path.Base(baseLangFilepath)))
-//     }
-//     return nil
-// }

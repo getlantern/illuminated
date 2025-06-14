@@ -10,7 +10,9 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestBar(t *testing.T) {
+var testProjectDir = path.Join("test-project")
+
+func TestTxWholeHTML(t *testing.T) {
 	testDir := path.Join("fake")
 	err := os.MkdirAll(testDir, DefaultFilePermissions)
 	require.NoError(t, err)

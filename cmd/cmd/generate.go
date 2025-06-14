@@ -158,10 +158,13 @@ var generateCmd = &cobra.Command{
 				outPath := path.Join(projectDir, illuminated.DefaultDirNameOutput, outName)
 				if _, err := os.Stat(outPath); !os.IsNotExist(err) {
 					if !force {
+						// TODO: this may be throwing false positives
 						slog.Info("skipping file to avoid clobber, set -f/--force to overwrite", "file", outPath)
+						continue
 					}
 				}
-				err := illuminated.WritePDF(sourcePath, outPath, "")
+				resources := path.Join(projectDir, illuminated.DefaultDirNameStaging)
+				err := illuminated.WritePDF(sourcePath, outPath, resources)
 				if err != nil {
 					return fmt.Errorf("generate PDF for lang %q: %w", baseLang, err)
 				}
@@ -199,7 +202,7 @@ func init() {
 		&targetLangs, "languages", "l", []string{},
 		"target languages to translated from source (ISO 639-1 codes)",
 	)
-	generateCmd.PersistentFlags().StringVarP(&translator, "translator", "t", "google", "translator service to use")
+	generateCmd.PersistentFlags().StringVarP(&translator, "translator", "t", "", "translator service to use")
 	generateCmd.MarkFlagsRequiredTogether("languages", "translator")
 
 	// output

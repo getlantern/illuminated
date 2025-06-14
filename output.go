@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/exec"
 	"path"
+	"regexp"
 	"strings"
 	"time"
 
@@ -57,11 +58,10 @@ func WritePDF(sourcePath, outPath string, resourcePath string) error {
 		return fmt.Errorf("pandoc not found in PATH, install and try again: %w", err)
 	}
 
-	// TODO: add back breaks?
-	// err = formatBreaks(sourcePath)
-	// if err != nil {
-	// 	return fmt.Errorf("format breaks in HTML: %w", err)
-	// }
+	err = formatBreaks(sourcePath)
+	if err != nil {
+		return fmt.Errorf("format breaks in HTML: %w", err)
+	}
 
 	title := strings.TrimSuffix(path.Base(sourcePath), ".html")
 
@@ -207,16 +207,20 @@ func JoinHTML(language string, projectDir string, name string) (string, error) {
 			return "", fmt.Errorf("read file %v: %w", file.Name(), err)
 		}
 
-		// bodyStart := strings.Index(strings.ReplaceAll(string(content), "\n", ""), "<body>")
-		// bodyEnd := strings.Index(strings.ReplaceAll(string(content), "\n", ""), "</body>")
-		bodyStart := strings.Index(string(content), "<body>")
+		reBodyStart := regexp.MustCompile(`<body[^>]*>`)
+		bodyStart := reBodyStart.FindStringIndex(string(content))
 		bodyEnd := strings.Index(string(content), "</body>")
-		if bodyStart == -1 || bodyEnd == -1 {
-			// slog.Warn("skipping file with no <body> tag", "name", file.Name(), "bodyStart", bodyStart, "bodyEnd", bodyEnd)
+		if bodyStart == nil || bodyEnd == -1 {
+			slog.Warn("skipping file with no <body> tag",
+				"name", file.Name(),
+				"bodyStart", bodyStart,
+				"bodyEnd", bodyEnd,
+			)
+			// fmt.Println(string(content))
 			continue
 		}
-		// slog.Warn("not skipping? TODO:", "name", file.Name(), "bodyStart", bodyStart, "bodyEnd", bodyEnd)
-		bodyContent := string(content)[bodyStart+len("<body>") : bodyEnd]
+		// Extract content between <body> and </body>
+		bodyContent := string(content)[bodyStart[1]:bodyEnd]
 		_, err = combinedBody.WriteString(bodyContent)
 		if err != nil {
 			return "", fmt.Errorf("write body content from file %v: %w", file.Name(), err)
