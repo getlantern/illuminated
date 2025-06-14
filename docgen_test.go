@@ -16,7 +16,7 @@ func TestBar(t *testing.T) {
 	require.NoError(t, err)
 
 	exampleDir := path.Join("example")
-	err = markdownToHTML(path.Join(exampleDir, "downloads.md"), path.Join(testDir, "downloads.html"))
+	err = MarkdownToHTML(path.Join(exampleDir, "downloads.md"), path.Join(testDir, "downloads.html"))
 	require.NoError(t, err)
 
 	err = os.RemoveAll(testProjectDir)
@@ -24,6 +24,7 @@ func TestBar(t *testing.T) {
 
 	ctx := context.Background()
 	g, err := translators.NewGoogleTranslator(ctx)
+	require.NoError(t, err)
 	rawHTML, err := markdownToRawHTML(path.Join(exampleDir, "downloads.md"))
 	require.NoError(t, err)
 	result, err := g.Translate(ctx, "es", []string{rawHTML})

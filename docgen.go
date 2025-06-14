@@ -22,8 +22,8 @@ func markdownToRawHTML(inputPath string) (string, error) {
 	return string(output), nil
 }
 
-// markdownToHTML reads markdown from inputPath and writes HTML to outputPath.
-func markdownToHTML(inputPath string, outputPath string) error {
+// MarkdownToHTML reads markdown from inputPath and writes HTML to outputPath.
+func MarkdownToHTML(inputPath string, outputPath string) error {
 	doc, err := markdownToRawHTML(inputPath)
 	if err != nil {
 		return err
@@ -34,7 +34,17 @@ func markdownToHTML(inputPath string, outputPath string) error {
 	}
 	defer f.Close()
 
-	_, err = f.WriteString(doc)
+	wrapped := fmt.Sprintf(
+		`<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+</head>
+<body>
+%s
+</body>
+</html>`, doc)
+	_, err = f.WriteString(wrapped)
 	if err != nil {
 		return fmt.Errorf("write to output file %q: %w", outputPath, err)
 	}

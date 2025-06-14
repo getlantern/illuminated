@@ -13,6 +13,7 @@ func (m *mockTranslator) SupportedLanguages(ctx context.Context, baseLang string
 	return []string{"en", "es", "ru", "fa", "zh"}, nil
 }
 
+// TODO: use lorem ipsum text for every supported language so that we can test font rendering in a unit test
 func (m *mockTranslator) Translate(ctx context.Context, targetLang string, texts []string) ([]string, error) {
 	translations := make([]string, len(texts))
 	for i, text := range texts {
