@@ -25,8 +25,6 @@ build() {
 restart() {
   echo "cleanup ..."
   ./illuminated cleanup --force "$VERBOSE"
-  echo "initializing ..."
-  ./illuminated init --base en --target en,fa,ru,ar,zh "$VERBOSE"
 }
 
 build
@@ -61,6 +59,12 @@ case "$2" in
     ;;
 esac
 
-./illuminated update --source "$SOURCE" "$VERBOSE"
-./illuminated translate --translator "$TRANSLATOR" "$VERBOSE"
-./illuminated generate --pdf "$VERBOSE"
+set -x
+./illuminated generate "$VERBOSE" \
+  --source "$SOURCE" \
+  --base "en" \
+  --languages "en,zh,ru,fa,ar" \
+  --translator "$TRANSLATOR" \
+  --html \
+  --pdf \
+  --join
