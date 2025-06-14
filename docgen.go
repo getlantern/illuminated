@@ -48,7 +48,7 @@ func MarkdownToHTML(inputPath string, outputPath string) error {
 	if err != nil {
 		return fmt.Errorf("write to output file %q: %w", outputPath, err)
 	}
-	slog.Info("HTML output generated",
+	slog.Debug("HTML output generated",
 		"input", inputPath,
 		"output", outputPath,
 	)
