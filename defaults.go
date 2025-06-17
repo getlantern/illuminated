@@ -5,8 +5,9 @@ import (
 )
 
 var (
-	DefaultFilePermissions   = os.FileMode(0o750)
-	DefaultFileNameOverrides = "overrides.yml"
+	DefaultDirProject        = "docs"
 	DefaultDirNameStaging    = "staging"
 	DefaultDirNameOutput     = "output"
+	DefaultFileNameOverrides = "overrides.yml"
+	DefaultFilePermissions   = os.FileMode(0o750)
 )

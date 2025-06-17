@@ -4,6 +4,7 @@ import (
 	"log/slog"
 	"os"
 
+	"github.com/getlantern/illuminated"
 	"github.com/spf13/cobra"
 )
 
@@ -32,7 +33,7 @@ func Execute() {
 func init() {
 	rootCmd.CompletionOptions.DisableDefaultCmd = true
 	rootCmd.PersistentFlags().StringVarP(
-		&projectDir, "directory", "d", "illuminated-project",
+		&projectDir, "directory", "d", illuminated.DefaultDirProject,
 		"project directory for output files",
 	)
 	rootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "verbose logging (DEBUG)")
