@@ -219,7 +219,6 @@ func JoinHTML(language string, projectDir string, name string) (string, error) {
 				"bodyStart", bodyStart,
 				"bodyEnd", bodyEnd,
 			)
-			// fmt.Println(string(content))
 			continue
 		}
 		// Extract content between <body> and </body>
