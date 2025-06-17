@@ -9,7 +9,7 @@ Converts a GitHub wiki into an HTML or PDF document, optionally translated into 
 
 ## purpose
 
-Support rapid iteration of GitHub Wiki while maintaining broad internationalization support and document generation for distirbution. 
+Support rapid iteration of GitHub Wiki while maintaining broad internationalization support and document generation for distribution. 
 
 ## usage
 
