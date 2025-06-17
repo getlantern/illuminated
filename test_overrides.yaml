@@ -1,0 +1,12 @@
+- title: Lantern
+  language: zh
+  original: 灯笼
+  replacement: 蓝灯
+- title: Block
+  language: en
+  original: blacklist
+  replacement: block list
+- title: Allow
+  language: en
+  original: whitelist
+  replacement: allow list

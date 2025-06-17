@@ -206,7 +206,7 @@ var generateCmd = &cobra.Command{
 				resources := path.Join(projectDir, illuminated.DefaultDirNameStaging)
 				err := illuminated.WritePDF(sourcePath, outPath, resources)
 				if err != nil {
-					return fmt.Errorf("generate PDF for lang %q: %w", baseLang, err)
+					return fmt.Errorf("generate PDF for lang %q: %w", lang, err)
 				}
 				// remove HTML if only used as intermediate file for PDF generation
 				if !html {
