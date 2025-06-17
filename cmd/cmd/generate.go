@@ -113,9 +113,7 @@ var generateCmd = &cobra.Command{
 				if overridesPath == "" {
 					overridesPath = path.Join(illuminated.DefaultFileNameOverrides)
 				}
-				overrides, err := illuminated.ReadOverrideFile(
-					path.Join(projectDir, illuminated.DefaultFileNameOverrides),
-				)
+				overrides, err := illuminated.ReadOverrideFile(illuminated.DefaultFileNameOverrides)
 				if err != nil {
 					if !os.IsNotExist(err) {
 						slog.Debug("no override file found",

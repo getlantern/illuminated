@@ -32,6 +32,7 @@ $ ./illuminated generate --verbose \
   --base "en" \
   --languages "en,zh,ru,fa,ar" \
   --translator "google" \
+  --overrides "../overrides.yml" \
   --html \
   --pdf \
   --join

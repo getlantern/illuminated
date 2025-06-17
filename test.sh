@@ -63,8 +63,9 @@ set -x
 ./illuminated generate "$VERBOSE" \
   --source "$SOURCE" \
   --base "en" \
-  --languages "en,zh,ru,fa,ar" \
+  --languages "zh" \
   --translator "$TRANSLATOR" \
   --html \
   --pdf \
-  --join
+  --join \
+# --languages "en,zh,ru,fa,ar" \
