@@ -245,11 +245,12 @@ func init() {
 		"target languages to translated from source (ISO 639-1 codes)",
 	)
 	generateCmd.PersistentFlags().StringVarP(&translator, "translator", "t", "", "translator service to use")
+	// NOTE: when base=languages, this is noop, but still required
 	generateCmd.MarkFlagsRequiredTogether("languages", "translator")
 	generateCmd.PersistentFlags().StringVarP(
-		&overrides, "overrides", "o",
-		path.Join(projectDir, illuminated.DefaultFileNameOverrides),
-		"path to yaml file defining overrides",
+		&overridesPath, "overrides", "o",
+		path.Join(illuminated.DefaultFileNameOverrides),
+		"path to yaml file defining overrides, see readme for example",
 	)
 
 	// output
