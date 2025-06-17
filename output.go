@@ -96,7 +96,10 @@ func WritePDF(sourcePath, outPath string, resourcePath string) error {
 		mainfont = "Noto Serif CJK SC"
 		dir = "ltr"
 	default:
-		slog.Error("unsupported language prefix in sourcePath", "lang", lang)
+		return fmt.Errorf(
+			"unsupported language prefix %q in sourcePath %q",
+			lang, sourcePath,
+		)
 	}
 
 	cmd := exec.Command(
