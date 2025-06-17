@@ -1,4 +1,4 @@
 # translators
 
-Internal `translators` package for for the `Translator` interface.
+Internal `translators` package, each file contains an implementation for for the `Translator` interface.
 

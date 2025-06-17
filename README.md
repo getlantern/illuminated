@@ -4,9 +4,12 @@
 
 internationalization tool for GitHub wikis
 
+## function
+Converts a GitHub wiki into an HTML or PDF document, optionally translated into multiple languages.
+
 ## purpose
 
-It should be possible for an update to an arbitrary markdown, like en/doc.md, to generate new, complete en.json source files and empty *.json translation files, in addition to generating the doc.md.tmpl which can regenerate the original en/doc.md or any other translation using itself any any *.json translation file. Then generate a pdf for each translation.
+Support rapid iteration of GitHub Wiki while maintaining broad internationalization support and document generation for distirbution. 
 
 ## usage
 
@@ -19,10 +22,10 @@ $ ./test.sh {local|remote} {mock|google}
 ### production
 Build the binary.
 ```sh
-$ go build -o illuminated
+$ go build -o illuminated ./cmd
 ```
 
-Generate a single, joined HTML and PDF for 5 langauges using Google translate.
+Generate a single, joined HTML and PDF for 5 languages using Google translate.
 ```sh
 $ ./illuminated generate --verbose \
   --source https://github.com/getlantern/guide.wiki.git \
@@ -42,19 +45,12 @@ $ ./illuminated --help
 ---
 
 ## Future Work
-- [x] read from ~dir~ or ~wiki source~
-- [x] write unit tests
-- [x] generate TOC
-- [x] implement fallback to base language
-- [x] append multiple docs
-- [x] create mechanism for warning on uncurrent translations
-- [x] support pictures
-- [x] test E2E (including Pandoc calls) in CI
 - [ ] support style for pagebreaks
 - [ ] handle footer
 - [ ] don't mutate data in place
 - [ ] fix bug with "skipping file with no body"
-- [ ] update fonts
+- [ ] update fonts with Noto *
+- [ ] support overrides
 
 ## fonts
 - DejaVu works for ru, fa, not zh
