@@ -41,6 +41,25 @@ Use the help command for details.
 ```sh
 $ ./illuminated --help
 ```
+### overrides
+If a specific phrase is needed for a particular language, define that in an `overrides.yml` file in the directory where the command is run (or specify a different path with the `--overrides` flag).
+
+Example `overrides.yml`:
+```yaml
+- title: Lantern
+  language: zh
+  original: 灯笼
+  replacement: 蓝灯
+- title: Block
+  language: en
+  original: blacklist
+  replacement: block list
+- title: Allow
+  language: en
+  original: whitelist
+  replacement: allow list
+```
+
 
 ---
 

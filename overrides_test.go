@@ -1,7 +1,6 @@
 package illuminated
 
 import (
-	"os"
 	"testing"
 )
 
@@ -28,13 +27,13 @@ var testOverrides = []override{
 
 func TestOverrides(t *testing.T) {
 	path := "test_overrides.yaml"
-	err := writeOverrides(path, testOverrides)
+	err := WriteOverrideFile(path, testOverrides)
 	if err != nil {
 		t.Fatalf("failed to write overrides: %v", err)
 	}
-	defer os.Remove(path)
+	// defer os.Remove(path)
 
-	overrides, err := readOverrides(path)
+	overrides, err := ReadOverrideFile(path)
 	if err != nil {
 		t.Fatalf("failed to read overrides: %v", err)
 	}

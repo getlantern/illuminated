@@ -14,14 +14,15 @@ import (
 )
 
 var (
-	projectDir  string
-	source      string   // source document(s): directory or GitHub wiki URL
-	targetLangs []string // target languages (ISO 639-1 codes)
-	baseLang    string   // base language of source files (ISO 639-1 code)
-	translator  string   // translator to use, e.g. "google", "mock"
-	join        bool     // join HTML files into single document or split into individual files?
-	html        bool     // generate HTML output
-	pdf         bool     // generate PDF output
+	projectDir    string
+	source        string   // source document(s): directory or GitHub wiki URL
+	targetLangs   []string // target languages (ISO 639-1 codes)
+	baseLang      string   // base language of source files (ISO 639-1 code)
+	translator    string   // translator to use, e.g. "google", "mock"
+	overridesPath string   // path to yaml file defining overrides
+	join          bool     // join HTML files into single document or split into individual files?
+	html          bool     // generate HTML output
+	pdf           bool     // generate PDF output
 )
 
 // generateCmd represents the generate command
@@ -51,7 +52,10 @@ var generateCmd = &cobra.Command{
 		}
 
 		// ensure output directory exists
-		err = os.MkdirAll(path.Join(projectDir, illuminated.DefaultDirNameOutput), illuminated.DefaultFilePermissions)
+		err = os.MkdirAll(
+			path.Join(projectDir, illuminated.DefaultDirNameOutput),
+			illuminated.DefaultFilePermissions,
+		)
 		if err != nil {
 			return fmt.Errorf("create output directory: %w", err)
 		}
@@ -96,7 +100,6 @@ var generateCmd = &cobra.Command{
 				txOutName := fmt.Sprintf("%s.%s.%s", lang, outName, "html")
 				txOutPath := path.Join(projectDir, illuminated.DefaultDirNameOutput, txOutName)
 
-				// read that
 				baseLangFileData, err := os.ReadFile(outPath)
 				if err != nil {
 					return fmt.Errorf("read base language file %q: %w", outPath, err)
@@ -105,6 +108,45 @@ var generateCmd = &cobra.Command{
 				if err != nil || len(tx) == 0 {
 					return fmt.Errorf("translate file %q to language %q: %w", outPath, lang, err)
 				}
+
+				// apply any overrides
+				if overridesPath == "" {
+					overridesPath = path.Join(illuminated.DefaultFileNameOverrides)
+				}
+				overrides, err := illuminated.ReadOverrideFile(
+					path.Join(projectDir, illuminated.DefaultFileNameOverrides),
+				)
+				if err != nil {
+					if !os.IsNotExist(err) {
+						slog.Debug("no override file found",
+							"expected", overridesPath,
+						)
+					} else {
+						return fmt.Errorf("read override file %q: %w", overridesPath, err)
+					}
+				}
+				for _, override := range overrides {
+					if override.Language != lang {
+						continue
+					}
+					if override.Original == "" || override.Replacement == "" {
+						slog.Warn("skipping override with empty original or replacement",
+							"override", override,
+						)
+						continue
+					}
+					for i, t := range tx {
+						tx[i] = strings.ReplaceAll(t, override.Original, override.Replacement)
+						slog.Debug("applied override",
+							"title", override.Title,
+							"original", override.Original,
+							"replacement", override.Replacement,
+							"lang", override.Language,
+							"file", txOutName,
+						)
+					}
+				}
+
 				err = os.WriteFile(txOutPath, []byte(tx[0]), illuminated.DefaultFilePermissions)
 				if err != nil {
 					return fmt.Errorf("write translated file %q: %w", txOutPath, err)
@@ -204,6 +246,11 @@ func init() {
 	)
 	generateCmd.PersistentFlags().StringVarP(&translator, "translator", "t", "", "translator service to use")
 	generateCmd.MarkFlagsRequiredTogether("languages", "translator")
+	generateCmd.PersistentFlags().StringVarP(
+		&overrides, "overrides", "o",
+		path.Join(projectDir, illuminated.DefaultFileNameOverrides),
+		"path to yaml file defining overrides",
+	)
 
 	// output
 	generateCmd.PersistentFlags().BoolVarP(&join, "join", "j", false, "join all documents into one")

@@ -5,13 +5,7 @@ import (
 	"log/slog"
 	"os"
 
-	"gopkg.in/yaml.v3"
-)
-
-var (
-	DefaultFilePermissions = os.FileMode(0o750)
-	DefaultDirNameStaging  = "staging"
-	DefaultDirNameOutput   = "output"
+	"gopkg.in/yaml.v2"
 )
 
 // override defines a word or phrase that should be overridden if/when it exists in a translation.
@@ -22,8 +16,8 @@ type override struct {
 	Replacement string `yaml:"replacement,omitempty"`
 }
 
-// writeOverrides writes a slice of overrides to a YAML file at path.
-func writeOverrides(path string, overrides []override) error {
+// WriteOverrideFile writes a slice of overrides to a YAML file at path.
+func WriteOverrideFile(path string, overrides []override) error {
 	f, err := os.Create(path)
 	if err != nil {
 		return fmt.Errorf("create override file")
@@ -44,8 +38,8 @@ func writeOverrides(path string, overrides []override) error {
 	return nil
 }
 
-// readOverrides reads a slice of overrides from a YAML file at path.
-func readOverrides(path string) ([]override, error) {
+// ReadOverrideFile reads a slice of overrides from a YAML file at path.
+func ReadOverrideFile(path string) ([]override, error) {
 	f, err := os.Open(path)
 	if err != nil {
 		return nil, fmt.Errorf("open override file: %w", err)
