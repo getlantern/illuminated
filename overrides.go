@@ -5,7 +5,7 @@ import (
 	"log/slog"
 	"os"
 
-	"gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
 )
 
 // override defines a word or phrase that should be overridden if/when it exists in a translation.
