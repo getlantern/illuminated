@@ -24,7 +24,7 @@ func NewGoogleTranslator(ctx context.Context) (*googleTranslator, error) {
 	return &googleTranslator{Client: client}, nil
 }
 
-// SuportedLanguages returns a list of supported target languages for the given base language.
+// SupportedLanguages returns a list of supported target languages for the given base language.
 func (g *googleTranslator) SupportedLanguages(ctx context.Context, baseLang string) ([]string, error) {
 	tag := language.Make(baseLang)
 	slog.Debug("making tag from base lang", "baseLang", baseLang, "tag", tag)
