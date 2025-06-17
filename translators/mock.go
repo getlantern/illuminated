@@ -18,7 +18,11 @@ func (m *mockTranslator) SupportedLanguages(ctx context.Context, baseLang string
 func (m *mockTranslator) Translate(ctx context.Context, targetLang string, texts []string) ([]string, error) {
 	translations := make([]string, len(texts))
 	for i := range texts {
-		translations[i] = loremIpsum[targetLang]
+		text, ok := loremIpsum[targetLang]
+		if !ok {
+			return nil, fmt.Errorf("unsupported language: %s", targetLang)
+		}
+		translations[i] = text
 		// fake, err := randWords(targetLang)
 		// if err != nil {
 		// 	return nil, fmt.Errorf("generate random words for language %q: %w", targetLang, err)
