@@ -22,13 +22,13 @@ build() {
   cd ..
 }
 
-restart() {
+cleanup() {
   echo "cleanup ..."
   ./illuminated cleanup --force "$VERBOSE"
 }
 
 build
-restart
+cleanup
 
 case "$1" in
   local)
