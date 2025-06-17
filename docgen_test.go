@@ -1,36 +1,38 @@
 package illuminated
 
 import (
-	"context"
 	"os"
 	"path"
 	"testing"
 
-	"github.com/getlantern/illuminated/translators"
 	"github.com/stretchr/testify/require"
 )
 
 var testProjectDir = path.Join("test-project")
 
-func TestTxWholeHTML(t *testing.T) {
-	testDir := path.Join("fake")
-	err := os.MkdirAll(testDir, DefaultFilePermissions)
+func TestMarkdownToRawHTML(t *testing.T) {
+	input := "test.md"
+	err := os.WriteFile(input, []byte("# Hello World"), 0o644)
+	require.NoError(t, err)
+	defer os.Remove(input)
+
+	html, err := markdownToRawHTML(input)
+	require.NoError(t, err)
+	require.Contains(t, html, "<h1>Hello World</h1>")
+}
+
+func TestMarkdownToHTML(t *testing.T) {
+	input := "test.md"
+	output := "test.html"
+	err := os.WriteFile(input, []byte("# Hello World"), 0o644)
+	require.NoError(t, err)
+	defer os.Remove(input)
+	defer os.Remove(output)
+
+	err = MarkdownToHTML(input, output)
 	require.NoError(t, err)
 
-	exampleDir := path.Join("example")
-	err = MarkdownToHTML(path.Join(exampleDir, "downloads.md"), path.Join(testDir, "downloads.html"))
+	content, err := os.ReadFile(output)
 	require.NoError(t, err)
-
-	err = os.RemoveAll(testProjectDir)
-	require.NoError(t, err)
-
-	ctx := context.Background()
-	g, err := translators.NewGoogleTranslator(ctx)
-	require.NoError(t, err)
-	rawHTML, err := markdownToRawHTML(path.Join(exampleDir, "downloads.md"))
-	require.NoError(t, err)
-	result, err := g.Translate(ctx, "es", []string{rawHTML})
-	require.NoError(t, err)
-	require.Len(t, result, 1)
-	t.Logf("Translated HTML:\n%s", result[0])
+	require.Contains(t, string(content), "<h1>Hello World</h1>")
 }
