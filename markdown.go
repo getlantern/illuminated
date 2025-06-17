@@ -13,7 +13,7 @@ var DefaultDirNameHTML = "html"
 
 // markdownToRawHTML reads a file from inputPath, returning an HTML string.
 func markdownToRawHTML(inputPath string) (string, error) {
-	f, err := os.ReadFile(path.Join(inputPath))
+	f, err := os.ReadFile(inputPath)
 	if err != nil {
 		return "", fmt.Errorf("read file %q: %w", inputPath, err)
 	}
