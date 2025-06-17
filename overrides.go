@@ -20,7 +20,7 @@ type override struct {
 func WriteOverrideFile(path string, overrides []override) error {
 	f, err := os.Create(path)
 	if err != nil {
-		return fmt.Errorf("create override file")
+		return fmt.Errorf("create override file: %w", err)
 	}
 	defer f.Close()
 	encoder := yaml.NewEncoder(f)
