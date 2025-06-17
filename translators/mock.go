@@ -12,7 +12,7 @@ import (
 type mockTranslator struct{}
 
 func (m *mockTranslator) SupportedLanguages(ctx context.Context, baseLang string) ([]string, error) {
-	return []string{"en", "es", "ru", "fa", "zh"}, nil
+	return []string{"en", "es", "ru", "fa", "ar", "zh"}, nil
 }
 
 func (m *mockTranslator) Translate(ctx context.Context, targetLang string, texts []string) ([]string, error) {
