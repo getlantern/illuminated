@@ -1,6 +1,7 @@
 package illuminated
 
 import (
+	"os"
 	"testing"
 )
 
@@ -31,7 +32,7 @@ func TestOverrides(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to write overrides: %v", err)
 	}
-	// defer os.Remove(path)
+	defer os.Remove(path)
 
 	overrides, err := ReadOverrideFile(path)
 	if err != nil {
