@@ -61,17 +61,3 @@ Example `overrides.yml`:
   replacement: allow list
 ```
 
-
----
-
-## Future Work
-- [ ] support style for pagebreaks
-- [ ] handle footer
-- [ ] don't mutate data in place
-- [ ] fix bug with "skipping file with no body"
-- [ ] update fonts with Noto *
-- [ ] support overrides
-
-## fonts
-- DejaVu works for ru, fa, not zh
-
