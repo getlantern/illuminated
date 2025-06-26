@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 usage() {
-    echo "usage: $0 {local|remote} {mock|google}"
+    echo "usage: $0 {local|remote} {mock|google} [en,zh,ru,fa,ar]"
 }
 
 
@@ -59,13 +59,23 @@ case "$2" in
     ;;
 esac
 
+default_languages="en"
+if [[ -n "$3" ]]; then
+  LANGUAGES="$3"
+else
+  echo "no languages specified, using default: $default_languages"
+  LANGUAGES="$default_languages"
+fi
+
 set -x
 ./illuminated generate "$VERBOSE" \
   --source "$SOURCE" \
   --base "en" \
-  --languages "zh" \
+  --languages "$LANGUAGES" \
   --translator "$TRANSLATOR" \
   --html \
   --pdf \
   --join \
+
+
 # --languages "en,zh,ru,fa,ar" \

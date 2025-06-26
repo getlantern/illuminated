@@ -76,24 +76,25 @@ func WritePDF(sourcePath, outPath string, resourcePath string) error {
 	}
 	lang := parts[0]
 
-	// NOTE: LaTeX and unicode fonts for PDF engines are tricky. Beware.
+	// NOTE: Code 43 errors are likely due to LaTeX pdf engine
+	// and unicode support or fonts.
 	var pdfEngine, mainfont, dir string
 	switch lang {
-	case "en", "ru":
+	case "en":
 		pdfEngine = "xelatex"
-		mainfont = "DejaVu Serif"
+		mainfont = "Noto Sans"
 		dir = "ltr"
-	case "fa":
+	case "ru":
 		pdfEngine = "xelatex"
-		mainfont = "DejaVu Sans"
-		dir = "rtl"
-	case "ar":
+		mainfont = "Noto Sans"
+		dir = "ltr"
+	case "fa", "ar":
 		pdfEngine = "xelatex"
-		mainfont = "DejaVu Sans"
+		mainfont = "Noto Sans Arabic"
 		dir = "rtl"
 	case "zh":
 		pdfEngine = "xelatex"
-		mainfont = "Noto Serif CJK SC"
+		mainfont = "Noto Sans CJK SC"
 		dir = "ltr"
 	default:
 		return fmt.Errorf(
@@ -111,9 +112,10 @@ func WritePDF(sourcePath, outPath string, resourcePath string) error {
 		"--pdf-engine", pdfEngine,
 		"--variable", fmt.Sprintf("mainfont=%s", mainfont),
 		"--variable", fmt.Sprintf("lang=%s", lang),
-		"--variable", fmt.Sprintf("dir=%s", dir),
+		"--variable", fmt.Sprintf("dir=%s", strings.Trim(dir, " ")),
 		sourcePath, "-o", outPath,
 	)
+	slog.Debug("pandoc command", "args", cmd.Args)
 	err = cmd.Run()
 	if err != nil {
 		if strings.Contains(err.Error(), "47") {

@@ -16,7 +16,7 @@ Support rapid iteration of GitHub Wiki while maintaining broad internationalizat
 ### development
 To delete all example files and start over with newly built binary, run:
 ```sh
-$ ./test.sh {local|remote} {mock|google}
+$ ./test.sh {local|remote} {mock|google} [comma-separated-languages]
 ```
 
 ### production
