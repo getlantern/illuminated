@@ -103,6 +103,35 @@ func WritePDF(sourcePath, outPath, resourcePath, title string) error {
 		return fmt.Errorf("format breaks in HTML: %w", err)
 	}
 
+	parts := strings.Split(title, ".")
+	if len(parts) < 2 {
+		return fmt.Errorf("sourcePath %q does not contain a language prefix", sourcePath)
+	}
+	lang := parts[0]
+
+	// NOTE: LaTeX and unicode fonts for PDF engines are tricky. Beware.
+	var pdfEngine, mainfont, dir string
+	switch lang {
+	case "en", "ru":
+		pdfEngine = "xelatex"
+		mainfont = "DejaVu Serif"
+		dir = "ltr"
+	case "fa":
+		pdfEngine = "xelatex"
+		mainfont = "DejaVu Sans"
+		dir = "rtl"
+	case "ar":
+		pdfEngine = "xelatex"
+		mainfont = "DejaVu Sans"
+		dir = "rtl"
+	case "zh":
+		pdfEngine = "xelatex"
+		mainfont = "Noto Serif CJK SC"
+		dir = "ltr"
+	default:
+		slog.Error("unsupported language prefix in sourcePath", "lang", lang)
+	}
+
 	cmd := exec.Command(
 		"pandoc",
 		"--metadata", fmt.Sprintf("title=%s", path.Base(title)),

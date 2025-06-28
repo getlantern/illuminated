@@ -33,9 +33,11 @@ $ ./illuminated generate --verbose \
   --languages "en,zh,ru,fa,ar" \
   --translator "google" \
   --overrides "../overrides.yml" \
+  --title "User Guide" \
   --html \
   --pdf \
-  --join
+  --join \
+  --force
 ```
 
 Use the help command for details.
