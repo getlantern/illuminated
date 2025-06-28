@@ -6,6 +6,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"regexp"
 	"strings"
 
 	"github.com/getlantern/illuminated"
@@ -23,6 +24,7 @@ var (
 	join          bool     // join HTML files into single document or split into individual files?
 	html          bool     // generate HTML output
 	pdf           bool     // generate PDF output
+	title         string   // title of the document in base language
 )
 
 // generateCmd represents the generate command
@@ -191,7 +193,11 @@ var generateCmd = &cobra.Command{
 				lang := parts[0]
 				var name string
 				if join {
-					name = projectDir
+					if title != "" {
+						name = strings.ReplaceAll(title, " ", "_")
+					} else {
+						name = projectDir
+					}
 				} else {
 					name = file.Name()
 				}
@@ -205,7 +211,23 @@ var generateCmd = &cobra.Command{
 					}
 				}
 				resources := path.Join(projectDir, illuminated.DefaultDirNameStaging)
-				err := illuminated.WritePDF(sourcePath, outPath, resources)
+
+				// translate the title
+				var translatedTitle string
+				if lang != baseLang && title != "" {
+					tx, err := g.Translate(cmd.Context(), lang, []string{title})
+					if err != nil || len(tx) == 0 {
+						return fmt.Errorf("translate title %q to language %q: %w", title, lang, err)
+					}
+					fmt.Println("tx: ", tx)
+					translatedTitle = regexp.MustCompile("<[^>]*>").ReplaceAllString(tx[0], "")
+
+				}
+				if translatedTitle == "" {
+					translatedTitle = title
+				}
+
+				err := illuminated.WritePDF(sourcePath, outPath, resources, translatedTitle)
 				if err != nil {
 					return fmt.Errorf("generate PDF for lang %q: %w", lang, err)
 				}
@@ -251,6 +273,8 @@ func init() {
 		path.Join(illuminated.DefaultFileNameOverrides),
 		"path to yaml file defining overrides, see readme for example",
 	)
+
+	generateCmd.PersistentFlags().StringVarP(&title, "title", "T", "", "title of the document (in base language)")
 
 	// output
 	generateCmd.PersistentFlags().BoolVarP(&join, "join", "j", false, "join all documents into one")

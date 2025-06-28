@@ -59,7 +59,7 @@ case "$2" in
     ;;
 esac
 
-default_languages="en"
+default_languages="en,ru,zh,fa,ar"
 if [[ -n "$3" ]]; then
   LANGUAGES="$3"
 else
@@ -73,9 +73,9 @@ set -x
   --base "en" \
   --languages "$LANGUAGES" \
   --translator "$TRANSLATOR" \
+  --title "Lantern User Guide" \
   --html \
   --pdf \
   --join \
+  --force
 
-
-# --languages "en,zh,ru,fa,ar" \

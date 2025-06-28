@@ -50,7 +50,7 @@ func writeHTML(path string, doc *html.Node) error {
 // WritePDF calls pandoc to output a PDF from a source file (HTML expected).
 // ResourcePath is used to specify the path for local resources (images, etc.),
 // while internet accessible resources will be fetched automatically.
-func WritePDF(sourcePath, outPath string, resourcePath string) error {
+func WritePDF(sourcePath, outPath, resourcePath, title string) error {
 	slog.Debug("calling pandoc to write from HTML", "source", sourcePath, "out", outPath, "resourcePath", resourcePath)
 	// first verify that pandoc is installed
 	_, err := exec.LookPath("pandoc")
@@ -58,13 +58,15 @@ func WritePDF(sourcePath, outPath string, resourcePath string) error {
 		return fmt.Errorf("pandoc not found in PATH, install and try again: %w", err)
 	}
 
-	title := strings.TrimSuffix(path.Base(sourcePath), ".html")
+	if title == "" {
+		title = strings.TrimSuffix(path.Base(sourcePath), ".html")
+	}
 	if resourcePath == "" {
 		slog.Debug("no resource path provided, assuming '.'")
 		resourcePath = "."
 	}
 
-	parts := strings.Split(title, ".")
+	parts := strings.Split(path.Base(sourcePath), ".")
 	if len(parts) < 2 {
 		return fmt.Errorf("sourcePath %q does not contain a language prefix", sourcePath)
 	}
