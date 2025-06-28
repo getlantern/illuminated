@@ -12,6 +12,7 @@ import (
 	"log/slog"
 	"os"
 	"path"
+	"slices"
 	"strings"
 
 	"github.com/russross/blackfriday/v2"
@@ -142,120 +143,132 @@ func GenerateHTMLs(baseLang string, targetLang []string, projectDir string, stri
 		"strict", strict,
 	)
 
+	// tx[lang][filename][key] = {translation string}
+	tx := make(map[string]map[string]map[string]string)
 	// set base translation as fallback
-	baseTx := make(map[string]map[string]string)
 	dirTx, err := os.ReadDir(path.Join(projectDir, DefaultDirNameTranslations))
 	if err != nil {
 		return fmt.Errorf("read translations directory: %w", err)
 	}
 
-	// add the base language translation strings to the baseTx map
-	for _, f := range dirTx {
-		if strings.HasPrefix(f.Name(), baseLang+".") {
-			fileTx := make(map[string]string)
-			baseTxFile := path.Join(
-				projectDir,
-				DefaultDirNameTranslations,
-				f.Name(),
+	// add existing translations from file
+	for _, file := range dirTx {
+		parts := strings.Split(file.Name(), ".")
+		if len(parts) < 1 {
+			return fmt.Errorf("invalid translation file name %q, expected format <lang>.<file>.json", file.Name())
+		}
+		// expects language code prefix (e.g. "en.README.json")
+		lang := parts[0]
+		name := parts[1]
+		if !slices.Contains(targetLang, lang) && lang != baseLang {
+			slog.Warn(
+				"skipping translation file, not in target languages",
+				"file", file.Name(),
+				"baseLang", baseLang,
+				"targetLangs", targetLang,
 			)
-			slog.Debug("extracting base language translations strings", "file", baseTxFile)
-			f, err := os.ReadFile(baseTxFile)
-			if err != nil {
-				return fmt.Errorf("read base translation file %v: %w", baseTxFile, err)
+			continue
+		}
+
+		f, err := os.ReadFile(path.Join(projectDir, DefaultDirNameTranslations, file.Name()))
+		if err != nil {
+			return fmt.Errorf("read translation file %q: %w", file.Name(), err)
+		}
+		fileTx := make(map[string]string)
+		err = json.Unmarshal(f, &fileTx)
+		if err != nil {
+			return fmt.Errorf("unmarshal translation file %q: %w", file.Name(), err)
+		}
+		if len(fileTx) == 0 {
+			return fmt.Errorf("translation file %q is empty or invalid", file.Name())
+		}
+		slog.Debug("translation file loaded",
+			"file", file.Name(),
+			"lang", lang,
+			"textCount", len(fileTx),
+		)
+		if _, exists := tx[lang]; !exists {
+			tx[lang] = make(map[string]map[string]string)
+		}
+		tx[lang][name] = fileTx
+	}
+
+	// Validate all translations are present.
+	// If strict is true, it will fail if any translation is missing,
+	// else, it will substitute missing translations from the base language
+	for langName, langData := range tx {
+		slog.Debug("processing translations", "language", langName)
+		for fileName, fileData := range langData {
+			slog.Debug("processing translation file", "language", langName, "file", fileName)
+			for key, value := range fileData {
+				// TODO: stuff
+				if strings.TrimSpace(value) == "" {
+					if strict {
+						return fmt.Errorf(
+							"[strict] missing translation %q in %q for language %q",
+							key, fileName, langName,
+						)
+					}
+					slog.Debug(
+						"[no strict] empty translation value to be substituted with base language",
+						"key", key,
+						"file", fileName,
+						"lang", langName,
+						"baseLang", baseLang,
+						"baseTxSub", tx[baseLang][fileName][key],
+					)
+					tx[langName][fileName][key] = tx[baseLang][fileName][key]
+				}
 			}
-			err = json.Unmarshal(f, &fileTx)
-			if err != nil {
-				return fmt.Errorf("unmarshal base translation file %v: %w", baseTxFile, err)
-			}
-			baseTx[baseLang] = fileTx
 		}
 	}
 
-	// generate translated HTMLs for every target language
-	for _, lang := range targetLang {
-		// populate target translation map
-		// lang.file.key
-		targetTx := make(map[string]map[string]string)
-		for _, file := range dirTx {
-			if strings.HasPrefix(file.Name(), lang+".") {
-				fileTx := make(map[string]string)
-				targetTxFile := path.Join(
-					projectDir,
-					DefaultDirNameTranslations,
-					file.Name(),
-				)
-				slog.Debug("reading target translation file", "file", targetTxFile)
-				f, err := os.ReadFile(targetTxFile)
-				if err != nil {
-					return fmt.Errorf("read target translation file %v: %w", targetTxFile, err)
-				}
-				err = json.Unmarshal(f, &fileTx)
-				if err != nil {
-					return fmt.Errorf("unmarshal target translation file %v: %w", targetTxFile, err)
-				}
-				targetTx[file.Name()] = fileTx
-			}
-		}
-		// validate and/or substitute (depending on strict mode)
-		for filename, file := range targetTx {
-			for k, v := range file {
-				if strings.TrimSpace(v) == "" {
-					if strict {
-						return fmt.Errorf("missing translation %q in %q", k, filename)
-					} else {
-						slog.Warn("missing translation, substituting base lang string",
-							"key", k,
-							"file", filename,
-							"baseLang", baseLang,
-							"targetLang", lang,
-							"baseTx", baseTx[baseLang][k],
-						)
-					}
-					targetTx[filename][k] = baseTx[baseLang][k]
-				}
-			}
-		}
+	// generate HTML file for every existing translation
+	dirOut := path.Join(projectDir, DefaultDirNameOutput)
+	err = os.MkdirAll(dirOut, DefaultFilePermissions)
+	if err != nil {
+		return fmt.Errorf("create output directory %v: %w", DefaultDirNameOutput, err)
+	}
 
-		// generate HTML file for every existing translation
-		dirOut := path.Join(projectDir, DefaultDirNameOutput)
-		err = os.MkdirAll(dirOut, DefaultFilePermissions)
-		if err != nil {
-			return fmt.Errorf("create output directory %v: %w", DefaultDirNameOutput, err)
-		}
-		// TODO: throw an error if there is a template but not translation or vice versa.
-		for _, tx := range dirTx {
-			if !strings.HasPrefix(tx.Name(), lang+".") {
-				continue // skip non-matching languages
-			}
-			outFile := fmt.Sprintf("%s.%s.html",
-				lang, strings.TrimPrefix(strings.TrimSuffix(tx.Name(), ".json"), lang+"."),
-			)
+	// for each language, generate HTML files from templates and translations
+	for lang, targetTx := range tx {
+		slog.Debug("generating HTML files for language", "lang", lang)
+		// for each translation file in the target language
+		for txFileBasename, txData := range targetTx {
+			slog.Debug("processing translation file", "lang", lang, "file", txFileBasename)
+			// construct output file name
+			outFile := fmt.Sprintf("%s.%s.html", lang, txFileBasename)
 			outPath := path.Join(dirOut, outFile)
 			fo, err := os.Create(outPath)
 			if err != nil {
 				return fmt.Errorf("create output file %v: %w", outFile, err)
 			}
-			tmplFilename := strings.TrimPrefix(tx.Name(), lang+".")
-			tmplFilename = strings.TrimSuffix(tmplFilename, path.Ext(tmplFilename)) + ".html.tmpl"
-			tmpl, err := template.ParseFiles(path.Join(
-				projectDir,
-				DefaultDirNameTemplates,
-				tmplFilename,
-			))
+			// load template file
+			tmplFilename := fmt.Sprintf("%s.html.tmpl", txFileBasename)
+			tmplPath := path.Join(projectDir, DefaultDirNameTemplates, tmplFilename)
+			tmpl, err := template.ParseFiles(tmplPath)
+			if err != nil {
+				return fmt.Errorf("parse template %v: %w", tmplPath, err)
+			}
 			slog.Debug("generating HTML from template",
 				"template", tmplFilename,
-				"translation", tx.Name(),
+				"translation", txFileBasename,
 			)
+			// execute template with translation data
+			err = tmpl.Execute(fo, txData)
 			if err != nil {
-				return fmt.Errorf("parse template %v: %w", tmplFilename, err)
+				return fmt.Errorf("execute template %v: %w", txFileBasename, err)
 			}
-			err = tmpl.Execute(fo, targetTx[tx.Name()])
+			err = fo.Close()
 			if err != nil {
-				return fmt.Errorf("execute template %v: %w", tx.Name(), err)
+				return fmt.Errorf("close output file %v: %w", outFile, err)
 			}
-			fo.Close()
 			slog.Info("generated HTML", "file", outFile)
 		}
+		slog.Info("generated HTML files for language",
+			"lang", lang,
+			"count", len(targetTx),
+		)
 	}
 	return nil
 }
