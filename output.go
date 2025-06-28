@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/exec"
 	"path"
+	"regexp"
 	"strings"
 	"time"
 
@@ -49,7 +50,7 @@ func writeHTML(path string, doc *html.Node) error {
 // WritePDF calls pandoc to output a PDF from a source file (HTML expected).
 // ResourcePath is used to specify the path for local resources (images, etc.),
 // while internet accessible resources will be fetched automatically.
-func WritePDF(sourcePath, outPath string, resourcePath string) error {
+func WritePDF(sourcePath, outPath, resourcePath, title string) error {
 	slog.Debug("calling pandoc to write from HTML", "source", sourcePath, "out", outPath, "resourcePath", resourcePath)
 	// first verify that pandoc is installed
 	_, err := exec.LookPath("pandoc")
@@ -57,46 +58,49 @@ func WritePDF(sourcePath, outPath string, resourcePath string) error {
 		return fmt.Errorf("pandoc not found in PATH, install and try again: %w", err)
 	}
 
-	// TODO: add back breaks?
-	// err = formatBreaks(sourcePath)
-	// if err != nil {
-	// 	return fmt.Errorf("format breaks in HTML: %w", err)
-	// }
-
-	title := strings.TrimSuffix(path.Base(sourcePath), ".html")
-
+	if title == "" {
+		title = strings.TrimSuffix(path.Base(sourcePath), ".html")
+	}
 	if resourcePath == "" {
 		slog.Debug("no resource path provided, assuming '.'")
 		resourcePath = "."
 	}
 
-	parts := strings.Split(title, ".")
+	parts := strings.Split(path.Base(sourcePath), ".")
 	if len(parts) < 2 {
 		return fmt.Errorf("sourcePath %q does not contain a language prefix", sourcePath)
 	}
 	lang := parts[0]
 
-	// NOTE: LaTeX and unicode fonts for PDF engines are tricky. Beware.
+	// NOTE: Code 43 errors are likely due to LaTeX pdf engine
+	// and unicode support or fonts.
 	var pdfEngine, mainfont, dir string
 	switch lang {
-	case "en", "ru":
+	case "en":
 		pdfEngine = "xelatex"
-		mainfont = "DejaVu Serif"
+		mainfont = "Noto Sans"
 		dir = "ltr"
-	case "fa":
+	case "ru":
 		pdfEngine = "xelatex"
-		mainfont = "DejaVu Sans"
-		dir = "rtl"
-	case "ar":
+		mainfont = "Noto Sans"
+		dir = "ltr"
+	case "fa", "ar":
 		pdfEngine = "xelatex"
-		mainfont = "DejaVu Sans"
+		mainfont = "Noto Sans Arabic"
 		dir = "rtl"
 	case "zh":
 		pdfEngine = "xelatex"
-		mainfont = "Noto Serif CJK SC"
+		mainfont = "Noto Sans CJK SC"
 		dir = "ltr"
 	default:
-		slog.Error("unsupported language prefix in sourcePath", "lang", lang)
+		return fmt.Errorf(
+			"unsupported language prefix %q in sourcePath %q",
+			lang, sourcePath,
+		)
+	}
+	err = format(sourcePath, dir)
+	if err != nil {
+		return fmt.Errorf("format breaks in HTML: %w", err)
 	}
 
 	cmd := exec.Command(
@@ -108,14 +112,21 @@ func WritePDF(sourcePath, outPath string, resourcePath string) error {
 		"--pdf-engine", pdfEngine,
 		"--variable", fmt.Sprintf("mainfont=%s", mainfont),
 		"--variable", fmt.Sprintf("lang=%s", lang),
-		"--variable", fmt.Sprintf("dir=%s", dir),
+		"--variable", fmt.Sprintf("dir=%s", strings.Trim(dir, " ")),
 		sourcePath, "-o", outPath,
 	)
+	slog.Debug("pandoc command", "args", cmd.Args)
 	err = cmd.Run()
 	if err != nil {
 		if strings.Contains(err.Error(), "47") {
 			return fmt.Errorf(
-				"pandoc: pdf engine (such as latex) not found or invalid; install and try again: %w",
+				"pandoc: pdf engine not found or invalid (xelatex recommended); install and try again: %w",
+				err,
+			)
+		}
+		if strings.Contains(err.Error(), "43") {
+			return fmt.Errorf(
+				"pandoc: fonts or ligatures not available, install and try again: %w",
 				err,
 			)
 		}
@@ -127,8 +138,10 @@ func WritePDF(sourcePath, outPath string, resourcePath string) error {
 	return nil
 }
 
-// formatBreaks adds a break before each <h1> tag in the HTML file.
-func formatBreaks(filepathHTML string) error {
+// format does html formatting:
+//   - adds a break before each <h1> tag in the HTML file
+//   - centers images
+func format(filepathHTML string, dir string) error {
 	htmlContent, err := os.ReadFile(filepathHTML)
 	if err != nil {
 		return fmt.Errorf("read %q: %w", filepathHTML, err)
@@ -152,6 +165,16 @@ func formatBreaks(filepathHTML string) error {
 		// `<b>\newpage</b><h1>`,
 		// `<h1 style="page-break-before: always;">`,
 	)
+	if dir == "rtl" {
+		modifiedHTML = strings.ReplaceAll(modifiedHTML, "<html>", `<html dir="rtl">`)
+	}
+	modifiedHTML = strings.ReplaceAll(
+		modifiedHTML,
+		"<img ", `<img style="display: block; margin-left: auto; margin-right: auto;" `,
+	)
+	// NOTE: <p> tags around <img> tags for rtl languages causes problems.
+	modifiedHTML = strings.ReplaceAll(modifiedHTML, "<p><img ", `<img `)
+	modifiedHTML = strings.ReplaceAll(modifiedHTML, "</img></p>", `</img>`)
 
 	// TODO: do something safer?
 	// Write the modified HTML back to the file
@@ -184,6 +207,7 @@ func JoinHTML(language string, projectDir string, name string) (string, error) {
 		return "", fmt.Errorf("write initial HTML structure: %w", err)
 	}
 
+	reBodyStart := regexp.MustCompile(`<body[^>]*>`)
 	for _, file := range files {
 		if file.IsDir() {
 			slog.Warn("skipping unexpected directory in output dir", "name", file.Name())
@@ -207,16 +231,19 @@ func JoinHTML(language string, projectDir string, name string) (string, error) {
 			return "", fmt.Errorf("read file %v: %w", file.Name(), err)
 		}
 
-		// bodyStart := strings.Index(strings.ReplaceAll(string(content), "\n", ""), "<body>")
-		// bodyEnd := strings.Index(strings.ReplaceAll(string(content), "\n", ""), "</body>")
-		bodyStart := strings.Index(string(content), "<body>")
+		bodyStart := reBodyStart.FindStringIndex(string(content))
 		bodyEnd := strings.Index(string(content), "</body>")
-		if bodyStart == -1 || bodyEnd == -1 {
-			// slog.Warn("skipping file with no <body> tag", "name", file.Name(), "bodyStart", bodyStart, "bodyEnd", bodyEnd)
+		if bodyStart == nil || bodyEnd == -1 {
+			slog.Warn("skipping file with no <body> tag",
+				"name", file.Name(),
+				"bodyStart", bodyStart,
+				"bodyEnd", bodyEnd,
+				"content", string(content),
+			)
 			continue
 		}
-		// slog.Warn("not skipping? TODO:", "name", file.Name(), "bodyStart", bodyStart, "bodyEnd", bodyEnd)
-		bodyContent := string(content)[bodyStart+len("<body>") : bodyEnd]
+		// Extract content between <body> and </body>
+		bodyContent := string(content)[bodyStart[1]:bodyEnd]
 		_, err = combinedBody.WriteString(bodyContent)
 		if err != nil {
 			return "", fmt.Errorf("write body content from file %v: %w", file.Name(), err)
@@ -242,6 +269,5 @@ func JoinHTML(language string, projectDir string, name string) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("write to consolidated file: %w", err)
 	}
-
 	return joinedFilePath, nil
 }

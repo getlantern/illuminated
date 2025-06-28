@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 usage() {
-    echo "usage: $0 {local|remote} {mock|google}"
+    echo "usage: $0 {local|remote} {mock|google} [en,zh,ru,fa,ar]"
 }
 
 
@@ -22,15 +22,13 @@ build() {
   cd ..
 }
 
-restart() {
+cleanup() {
   echo "cleanup ..."
   ./illuminated cleanup --force "$VERBOSE"
-  echo "initializing ..."
-  ./illuminated init --base en --target en,fa,ru,ar,zh "$VERBOSE"
 }
 
 build
-restart
+cleanup
 
 case "$1" in
   local)
@@ -61,6 +59,23 @@ case "$2" in
     ;;
 esac
 
-./illuminated update --source "$SOURCE" "$VERBOSE"
-./illuminated translate --translator "$TRANSLATOR" "$VERBOSE"
-./illuminated generate --pdf "$VERBOSE"
+default_languages="en,ru,zh,fa,ar"
+if [[ -n "$3" ]]; then
+  LANGUAGES="$3"
+else
+  echo "no languages specified, using default: $default_languages"
+  LANGUAGES="$default_languages"
+fi
+
+set -x
+./illuminated generate "$VERBOSE" \
+  --source "$SOURCE" \
+  --base "en" \
+  --languages "$LANGUAGES" \
+  --translator "$TRANSLATOR" \
+  --title "Lantern User Guide" \
+  --html \
+  --pdf \
+  --join \
+  --force
+
