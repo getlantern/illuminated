@@ -58,13 +58,7 @@ func WritePDF(sourcePath, outPath string, resourcePath string) error {
 		return fmt.Errorf("pandoc not found in PATH, install and try again: %w", err)
 	}
 
-	err = formatBreaks(sourcePath)
-	if err != nil {
-		return fmt.Errorf("format breaks in HTML: %w", err)
-	}
-
 	title := strings.TrimSuffix(path.Base(sourcePath), ".html")
-
 	if resourcePath == "" {
 		slog.Debug("no resource path provided, assuming '.'")
 		resourcePath = "."
@@ -102,6 +96,10 @@ func WritePDF(sourcePath, outPath string, resourcePath string) error {
 			lang, sourcePath,
 		)
 	}
+	err = format(sourcePath, dir)
+	if err != nil {
+		return fmt.Errorf("format breaks in HTML: %w", err)
+	}
 
 	cmd := exec.Command(
 		"pandoc",
@@ -132,8 +130,10 @@ func WritePDF(sourcePath, outPath string, resourcePath string) error {
 	return nil
 }
 
-// formatBreaks adds a break before each <h1> tag in the HTML file.
-func formatBreaks(filepathHTML string) error {
+// format does html formatting:
+//   - adds a break before each <h1> tag in the HTML file
+//   - centers images
+func format(filepathHTML string, dir string) error {
 	htmlContent, err := os.ReadFile(filepathHTML)
 	if err != nil {
 		return fmt.Errorf("read %q: %w", filepathHTML, err)
@@ -157,6 +157,16 @@ func formatBreaks(filepathHTML string) error {
 		// `<b>\newpage</b><h1>`,
 		// `<h1 style="page-break-before: always;">`,
 	)
+	if dir == "rtl" {
+		modifiedHTML = strings.ReplaceAll(modifiedHTML, "<html>", `<html dir="rtl">`)
+	}
+	modifiedHTML = strings.ReplaceAll(
+		modifiedHTML,
+		"<img ", `<img style="display: block; margin-left: auto; margin-right: auto;" `,
+	)
+	// NOTE: <p> tags around <img> tags for rtl languages causes problems.
+	modifiedHTML = strings.ReplaceAll(modifiedHTML, "<p><img ", `<img `)
+	modifiedHTML = strings.ReplaceAll(modifiedHTML, "</img></p>", `</img>`)
 
 	// TODO: do something safer?
 	// Write the modified HTML back to the file
