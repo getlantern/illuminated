@@ -120,7 +120,13 @@ func WritePDF(sourcePath, outPath, resourcePath, title string) error {
 	if err != nil {
 		if strings.Contains(err.Error(), "47") {
 			return fmt.Errorf(
-				"pandoc: pdf engine (such as latex) not found or invalid; install and try again: %w",
+				"pandoc: pdf engine not found or invalid (xelatex recommended); install and try again: %w",
+				err,
+			)
+		}
+		if strings.Contains(err.Error(), "43") {
+			return fmt.Errorf(
+				"pandoc: fonts or ligatures not available, install and try again: %w",
 				err,
 			)
 		}
