@@ -42,7 +42,7 @@ var loremIpsum = map[string]string{
 	"en": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
 	"es": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore y dolor magna aliqua.",
 	"ru": "Лорем ипсум долор сит амет, консектетур адиписцинг элит, сед до еиусмод темпор инцидидунт ут лаборе ет долоре магна аликуа.",
-	"fa": "لورم ایپسوم متن ساختگی با تولید سادگی نامفهوم از صنعت چاپ و با استفاده از طراحان گرافیک استu",
+	"fa": "لورم ایپسوم متن ساختگی با تولید سادگی نامفهوم از صنعت چاپ و با استفاده از طراحان گرافیک است",
 	"ar": "لوريم ايبسوم دولار سيت أميت , كونسيكتيتور أديبيسكينغ أليت , سيد دو أيوسمود تيمبور إنسيديدونت أوت لابوري إت دولار ماجنا أليكوا.",
 	"zh": "假文本文是印刷和排版行业的虚拟文本。",
 }

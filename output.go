@@ -189,6 +189,7 @@ func JoinHTML(language string, projectDir string, name string) (string, error) {
 		return "", fmt.Errorf("write initial HTML structure: %w", err)
 	}
 
+	reBodyStart := regexp.MustCompile(`<body[^>]*>`)
 	for _, file := range files {
 		if file.IsDir() {
 			slog.Warn("skipping unexpected directory in output dir", "name", file.Name())
@@ -212,7 +213,6 @@ func JoinHTML(language string, projectDir string, name string) (string, error) {
 			return "", fmt.Errorf("read file %v: %w", file.Name(), err)
 		}
 
-		reBodyStart := regexp.MustCompile(`<body[^>]*>`)
 		bodyStart := reBodyStart.FindStringIndex(string(content))
 		bodyEnd := strings.Index(string(content), "</body>")
 		if bodyStart == nil || bodyEnd == -1 {

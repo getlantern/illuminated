@@ -66,6 +66,7 @@ var generateCmd = &cobra.Command{
 			if err != nil {
 				return fmt.Errorf("create %q translator client: %w", translator, err)
 			}
+			defer g.Close(cmd.Context())
 		}
 
 		// generate HTML from markdown
@@ -115,7 +116,7 @@ var generateCmd = &cobra.Command{
 				}
 				overrides, err := illuminated.ReadOverrideFile(overridesPath)
 				if err != nil {
-					if !os.IsNotExist(err) {
+					if os.IsNotExist(err) {
 						slog.Debug("no override file found",
 							"expected", overridesPath,
 						)
