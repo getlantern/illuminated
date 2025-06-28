@@ -220,6 +220,7 @@ func JoinHTML(language string, projectDir string, name string) (string, error) {
 				"name", file.Name(),
 				"bodyStart", bodyStart,
 				"bodyEnd", bodyEnd,
+				"content", string(content),
 			)
 			continue
 		}

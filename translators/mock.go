@@ -4,7 +4,9 @@ import (
 	"context"
 	"fmt"
 	"math/rand"
-	"time"
+	"strings"
+
+	"golang.org/x/net/html"
 )
 
 // mockTranslator allows for unit testing mock calls to a translation service.
@@ -17,21 +19,31 @@ func (m *mockTranslator) SupportedLanguages(ctx context.Context, baseLang string
 
 func (m *mockTranslator) Translate(ctx context.Context, targetLang string, texts []string) ([]string, error) {
 	translations := make([]string, len(texts))
-	for i := range texts {
-		text, ok := loremIpsum[targetLang]
-		if !ok {
-			return nil, fmt.Errorf("unsupported language: %s", targetLang)
+	for i, text := range texts {
+		doc, err := html.Parse(strings.NewReader(text))
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse HTML: %w", err)
 		}
-		translations[i] = text
-		// fake, err := randWords(targetLang)
-		// if err != nil {
-		// 	return nil, fmt.Errorf("generate random words for language %q: %w", targetLang, err)
-		// }
-		// if len(fake) == 0 {
-		// 	// NOTE: this should maybe just skip silently?
-		// 	return nil, fmt.Errorf("generated text for language %q is empty", targetLang)
-		// }
-		// translations[i] = strings.TrimSpace(fake)
+
+		var substituteText func(*html.Node)
+		substituteText = func(n *html.Node) {
+			if n.Type == html.TextNode {
+				translatedText, ok := loremIpsum[targetLang]
+				if ok {
+					n.Data = translatedText
+				}
+			}
+			for c := n.FirstChild; c != nil; c = c.NextSibling {
+				substituteText(c)
+			}
+		}
+		substituteText(doc)
+
+		var buf strings.Builder
+		if err := html.Render(&buf, doc); err != nil {
+			return nil, fmt.Errorf("failed to render HTML: %w", err)
+		}
+		translations[i] = buf.String()
 	}
 	return translations, nil
 }
@@ -39,12 +51,12 @@ func (m *mockTranslator) Translate(ctx context.Context, targetLang string, texts
 func (m *mockTranslator) Close(ctx context.Context) {}
 
 var loremIpsum = map[string]string{
-	"en": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
-	"es": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore y dolor magna aliqua.",
-	"ru": "Лорем ипсум долор сит амет, консектетур адиписцинг элит, сед до еиусмод темпор инцидидунт ут лаборе ет долоре магна аликуа.",
-	"fa": "لورم ایپسوم متن ساختگی با تولید سادگی نامفهوم از صنعت چاپ و با استفاده از طراحان گرافیک است",
-	"ar": "لوريم ايبسوم دولار سيت أميت , كونسيكتيتور أديبيسكينغ أليت , سيد دو أيوسمود تيمبور إنسيديدونت أوت لابوري إت دولار ماجنا أليكوا.",
-	"zh": "假文本文是印刷和排版行业的虚拟文本。",
+	"en": "The quick brown fox jumps over the lazy dog.",
+	"es": "El veloz zorro marrón salta sobre el perro perezoso.",
+	"ru": "Быстрая коричневая лиса прыгает через ленивую собаку.",
+	"fa": `روباه قهوه‌ای سریع از روی سگ تنبل می‌پرد.`,
+	"ar": "الثعلب البني السريع يقفز فوق الكلب الكسول.",
+	"zh": "快速的棕色狐狸跳过懒狗。",
 }
 
 func randWords(lang string) (string, error) {
@@ -57,9 +69,8 @@ func randWords(lang string) (string, error) {
 		return "", fmt.Errorf("lorem ipsum text for language %q is empty", lang)
 	}
 
-	rand.Seed(time.Now().UnixNano())
 	start := rand.Intn(length)
-	end := start + rand.Intn(length-start)
+	end := start + rand.Intn(length-start) + 1
 
 	return text[start:end], nil
 }
