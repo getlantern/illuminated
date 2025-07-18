@@ -4,12 +4,11 @@
 
 internationalization tool for GitHub wikis
 
-## function
-Converts a GitHub wiki into an HTML or PDF document, optionally translated into multiple languages.
-
 ## purpose
+Converts a GitHub wiki into an HTML or PDF, optionally translated into multiple languages, to support rapid iteration of GitHub Wiki content while maintaining broad internationalization support and document generation for distribution.
 
-Support rapid iteration of GitHub Wiki while maintaining broad internationalization support and document generation for distribution. 
+## dependencies
+[pandoc](https://pandoc.org/) and the xelatexhttps://en.wikipedia.org/wiki/XeTeX PDF engine
 
 ## usage
 
