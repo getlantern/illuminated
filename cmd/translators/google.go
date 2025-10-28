@@ -4,9 +4,11 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"os"
 
 	g "cloud.google.com/go/translate"
 	"golang.org/x/text/language"
+	"google.golang.org/api/option"
 )
 
 // googleTranslator implements the Translator interface using Google Translate API.
@@ -16,15 +18,19 @@ type googleTranslator struct {
 
 // NewGoogleTranslator returns a new Google Translate client.
 func NewGoogleTranslator(ctx context.Context) (*googleTranslator, error) {
-	// TODO: use non-local ADC credential setup for production
-	client, err := g.NewClient(ctx)
+	keyName := "GOOGLE_API_KEY"
+	key, ok := os.LookupEnv(keyName)
+	if !ok {
+		return nil, fmt.Errorf("%s not found in context", keyName)
+	}
+	client, err := g.NewClient(ctx, option.WithAPIKey(key))
 	if err != nil {
 		return &googleTranslator{}, fmt.Errorf("create Google Translate client: %w", err)
 	}
 	return &googleTranslator{Client: client}, nil
 }
 
-// SuportedLanguages returns a list of supported target languages for the given base language.
+// SupportedLanguages returns a list of supported target languages for the given base language.
 func (g *googleTranslator) SupportedLanguages(ctx context.Context, baseLang string) ([]string, error) {
 	tag := language.Make(baseLang)
 	slog.Debug("making tag from base lang", "baseLang", baseLang, "tag", tag)

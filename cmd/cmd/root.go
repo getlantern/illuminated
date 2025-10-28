@@ -17,7 +17,6 @@ var rootCmd = &cobra.Command{
 	Long:   "fetches a local or remote source to generate HTML and/or PDF files in multiple languages.",
 	PreRun: func(cmd *cobra.Command, args []string) { Init() },
 	RunE: func(cmd *cobra.Command, args []string) error {
-		// slog.Info("illuminated CLI tool", "version", "0.1.0")
 		cmd.Usage()
 		return nil
 	},
