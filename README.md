@@ -10,6 +10,9 @@ Converts a GitHub wiki into an HTML or PDF, optionally translated into multiple 
 ## dependencies
 [pandoc](https://pandoc.org/) and the xelatex PDF engine
 
+## authorization
+- Google: set `GOOGLE_API_KEY` in environment.
+
 ## usage
 
 ### development
