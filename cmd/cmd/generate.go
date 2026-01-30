@@ -101,7 +101,19 @@ var generateCmd = &cobra.Command{
 				if err != nil {
 					return fmt.Errorf("read base language file %q: %w", outPath, err)
 				}
-				tx, err := g.Translate(cmd.Context(), lang, []string{string(baseLangFileData)})
+
+				// Extract body content only for translation to avoid issues with full HTML docs
+				htmlContent := string(baseLangFileData)
+				bodyStart := strings.Index(htmlContent, "<body>")
+				bodyEnd := strings.Index(htmlContent, "</body>")
+				var contentToTranslate string
+				if bodyStart != -1 && bodyEnd != -1 {
+					contentToTranslate = htmlContent[bodyStart+6 : bodyEnd] // +6 to skip "<body>"
+				} else {
+					contentToTranslate = htmlContent // fallback to full content
+				}
+
+				tx, err := g.Translate(cmd.Context(), lang, []string{contentToTranslate})
 				if err != nil || len(tx) == 0 {
 					return fmt.Errorf("translate file %q to language %q: %w", outPath, lang, err)
 				}
@@ -142,7 +154,15 @@ var generateCmd = &cobra.Command{
 					}
 				}
 
-				err = os.WriteFile(txOutPath, []byte(tx[0]), illuminated.DefaultFilePermissions)
+				// Reconstruct full HTML document if we extracted body content
+				var finalContent string
+				if bodyStart != -1 && bodyEnd != -1 {
+					finalContent = htmlContent[:bodyStart+6] + tx[0] + htmlContent[bodyEnd:]
+				} else {
+					finalContent = tx[0]
+				}
+
+				err = os.WriteFile(txOutPath, []byte(finalContent), illuminated.DefaultFilePermissions)
 				if err != nil {
 					return fmt.Errorf("write translated file %q: %w", txOutPath, err)
 				}
