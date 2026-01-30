@@ -269,26 +269,5 @@ func JoinHTML(language string, projectDir string, name string) (string, error) {
 		return "", fmt.Errorf("write to consolidated file: %w", err)
 	}
 
-	// Delete the other files
-	for _, file := range files {
-		if file.IsDir() {
-			continue
-		}
-		if !strings.HasPrefix(file.Name(), language+".") {
-			continue
-		}
-		if !strings.HasSuffix(file.Name(), ".html") {
-			continue
-		}
-		if file.Name() == joinedFilePath {
-			continue
-		}
-		filePath := path.Join(outputDir, file.Name())
-		err := os.Remove(filePath)
-		if err != nil {
-			return "", fmt.Errorf("delete file %v: %w", file.Name(), err)
-		}
-	}
-
 	return joinedFilePath, nil
 }

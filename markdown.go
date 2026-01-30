@@ -17,30 +17,18 @@ func markdownToRawHTML(inputPath string) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("read file %q: %w", inputPath, err)
 	}
-	output := blackfriday.Run(fillSpacingMD(f))
-
+	output := blackfriday.Run(fixMarkdownSpacing(f))
 	return string(output), nil
 }
 
-// fillSpacingMD adds spacing in markdown data where needed to ensure proper HTML rendering.
-// - after headers
-// - before lists
-func fillSpacingMD(data []byte) []byte {
-	// Add blank line after headers (## Header) if followed by non-blank content
-	// Match: header line followed immediately by non-blank, non-header line
-	headerPattern := regexp.MustCompile(`(?m)(^#{1,6}\s+.+)\n([^\n#])`)
-	data = headerPattern.ReplaceAll(data, []byte("$1\n\n$2"))
-
-	// Add blank line before unordered lists (- item) if not already present
-	// Match: non-blank line followed immediately by list item
-	unorderedListPattern := regexp.MustCompile(`(?m)([^\n])\n(^-\s+)`)
-	data = unorderedListPattern.ReplaceAll(data, []byte("$1\n\n$2"))
-
-	// Add blank line before ordered lists (1. item) if not already present
-	// Match: non-blank line followed immediately by numbered list item
-	orderedListPattern := regexp.MustCompile(`(?m)([^\n])\n(^\d+\.\s+)`)
-	data = orderedListPattern.ReplaceAll(data, []byte("$1\n\n$2"))
-
+// fixMarkdownSpacing adds blank lines after headers and before lists to ensure proper HTML rendering
+func fixMarkdownSpacing(data []byte) []byte {
+	// Blank line after headers
+	data = regexp.MustCompile(`(?m)(^#{1,6}\s+.+)\n([^\n#])`).ReplaceAll(data, []byte("$1\n\n$2"))
+	// Blank line before unordered lists
+	data = regexp.MustCompile(`(?m)([^\n])\n(^-\s+)`).ReplaceAll(data, []byte("$1\n\n$2"))
+	// Blank line before ordered lists
+	data = regexp.MustCompile(`(?m)([^\n])\n(^\d+\.\s+)`).ReplaceAll(data, []byte("$1\n\n$2"))
 	return data
 }
 
@@ -50,11 +38,6 @@ func MarkdownToHTML(inputPath string, outputPath string) error {
 	if err != nil {
 		return err
 	}
-	f, err := os.Create(outputPath)
-	if err != nil {
-		return fmt.Errorf("create output file %q: %w", outputPath, err)
-	}
-	defer f.Close()
 
 	wrapped := fmt.Sprintf(
 		`<!DOCTYPE html>
@@ -66,14 +49,14 @@ func MarkdownToHTML(inputPath string, outputPath string) error {
 %s
 </body>
 </html>`, doc)
-	_, err = f.WriteString(wrapped)
-	if err != nil {
-		return fmt.Errorf("write to output file %q: %w", outputPath, err)
+
+	if err := os.WriteFile(outputPath, []byte(wrapped), DefaultFilePermissions); err != nil {
+		return fmt.Errorf("write output file %q: %w", outputPath, err)
 	}
+
 	slog.Debug("HTML output generated",
 		"input", inputPath,
 		"output", outputPath,
 	)
-
 	return nil
 }
